@@ -1,0 +1,1911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Ilyes Benmaamar: a multi-source shipping-market data pipeline, Harbour View for steering AI agents, and the AI Operating System.">
+<style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Ilyes Benmaamar Portfolio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: Harbour View's own skin. The page is the harbour: sky over open water, and every section is a
+   door panel floating on it (cream, thick brown outline, honey header strip), exactly as doors open in the app.
+   One deliberate look, like the app itself: it does not switch to a dark theme. */
+:root {
+  color-scheme: light;
+  --sky: #8fd3ff;
+  --sea: #5fb6e8;
+  --paper: #fff7e3;     /* door panels */
+  --paper-2: #ffe9b8;   /* door headers, notes */
+  --card: #fffdf7;      /* cards inside a door */
+  --ink: #3a2a1a;       /* outlines and text */
+  --muted: #7a6650;
+  --line: #e2d6bd;
+  --rope: #c9a66b;      /* dashed and inner borders */
+  --flag: #ffd24a;      /* primary buttons, highlights */
+  --signal: #b06a00;    /* amber as text */
+  --signal-bg: #ffe3a3;
+  --port: #a32d2d;      /* deny, failed */
+  --port-bg: #ffd9d6;
+  --stbd: #1f7a50;      /* allow, done */
+  --stbd-bg: #d9f7e9;
+  --run: #2e5c8a;       /* pipeline runs */
+  --run-bg: #e6eefa;
+  --bronze: #b0743c; --bronze-bg: #f6e3cf;
+  --silver: #6f7f8c; --silver-bg: #e9eef2;
+  --gold: #b88a00; --gold-bg: #fff0b8;
+  --shadow: rgba(58, 42, 26, 0.35);
+  --body: "Trebuchet MS", "Lucida Grande", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--sea) linear-gradient(180deg, var(--sky) 0, var(--sky) 380px, var(--sea) 900px) no-repeat; color: var(--ink); font: 15.5px/1.55 var(--body); }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { font-family: var(--body); font-weight: 700; line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.5rem, 3.6vw, 2.1rem); text-transform: uppercase; letter-spacing: 0.02em; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; }
+.label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.zone { display: inline-block; background: var(--ink); color: var(--paper); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 9px; }
+.tag { display: inline-block; background: var(--paper); border: 2px solid var(--ink); border-radius: 9px; padding: 1px 9px; font-size: 0.78rem; font-weight: 700; box-shadow: 0 2px 0 var(--shadow); }
+.btn { font: 700 0.82rem var(--body); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 10px; padding: 4px 12px; cursor: pointer; }
+.btn:hover { background: var(--flag); }
+.btn.go { background: var(--flag); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.wrap { max-width: 1140px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Header: a door header strip pinned to the top */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper-2); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--paper-2); border-bottom: 2.5px solid var(--ink); }
+.top .wrap { display: flex; align-items: center; gap: 14px; padding-block: 8px; }
+.mark { font-weight: 700; font-size: 1.05rem; text-decoration: none; white-space: nowrap; }
+.mark i { font-style: normal; display: inline-block; width: 12px; height: 12px; background: var(--flag); border: 2px solid var(--ink); border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
+.top nav { display: flex; gap: 4px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+.top nav a { font-size: 0.82rem; font-weight: 700; text-decoration: none; padding: 3px 10px; border-radius: 9px; border: 2px solid transparent; white-space: nowrap; }
+.top nav a:hover { border-color: var(--ink); background: var(--paper); }
+.top nav a.on { border-color: var(--ink); background: var(--flag); }
+
+/* ---- Hero: on the sky, with the live harbour ---- */
+.hero { padding-block: 36px 10px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr); gap: 28px; align-items: center; }
+.hero h1 { font-size: clamp(3.2rem, 8.4vw, 5.8rem); text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.95; color: var(--paper);
+  text-shadow: 3px 0 var(--ink), -3px 0 var(--ink), 0 3px var(--ink), 0 -3px var(--ink), 2px 2px var(--ink), -2px -2px var(--ink), 2px -2px var(--ink), -2px 2px var(--ink), 0 8px 0 var(--shadow); }
+.hero h1 em { font-style: normal; color: var(--flag); }
+.hero .eyebrow { margin-bottom: 14px; }
+.lede-card { margin-top: 20px; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--shadow); padding: 14px 16px; display: grid; gap: 10px; }
+.lede { font-size: 1.08rem; line-height: 1.5; }
+.byline { font-size: 0.9rem; color: var(--muted); }
+.byline b { color: var(--ink); }
+.facts { display: flex; flex-wrap: wrap; gap: 7px; }
+.fact { background: var(--card); border: 2px solid var(--ink); border-radius: 10px; padding: 3px 10px; font-size: 0.78rem; font-weight: 700; }
+.fact b { font-size: 1.05rem; margin-right: 4px; font-variant-numeric: tabular-nums; }
+
+.live { position: relative; height: 470px; border: 2.5px solid var(--ink); border-radius: 16px; overflow: hidden; box-shadow: 0 7px 0 var(--shadow); background: #8fd3ff; }
+.live-cap { position: absolute; left: 12px; top: 12px; z-index: 6; pointer-events: none; }
+.live-note { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.86rem; font-weight: 700; color: var(--ink); }
+#h3 { position: absolute; inset: 0; }
+.no3d { position: absolute; inset: 0; display: grid; place-content: center; gap: 10px; padding: 24px; text-align: center; background: var(--sea); }
+.no3d .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 460px; }
+
+/* The app's own harbour styles (web/styles.css), so the live view is exactly as in Harbour View */
+.harbour3d { position: relative; height: 100%; overflow: hidden; font-family: var(--body); }
+.harbour3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.h3-tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.harbour3d .tag { position: absolute; transform: translate(-50%, -100%); padding: 2px 10px; border-radius: 9px; background: #fff7e3; color: #3a2a1a; border: 2px solid #3a2a1a; font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 0 rgba(58, 42, 26, 0.3); display: block; }
+.harbour3d .tag.zone { background: #3a2a1a; color: #fff7e3; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+.harbour3d .tag.lit { background: #ffd24a; }
+.harbour3d .tag.place.planned, .harbour3d .tag.place.standalone { background: #dde9ff; }
+.harbour3d .tag.place.locked, .harbour3d .tag.place.copy { background: #ffe3a3; }
+.harbour3d .tag.place.dormant { background: #e8e2d6; color: #7a6650; }
+.h3-hint { position: absolute; left: 12px; bottom: 12px; padding: 5px 11px; border-radius: 10px; background: #fff7e3; color: #7a6650; border: 2px solid #3a2a1a; font-size: 12px; font-weight: 700; pointer-events: none; }
+.hb-card { display: none; }
+.h3-shipcard { position: absolute; transform: translate(-50%, calc(-100% - 6px)); pointer-events: auto; z-index: 2; }
+.h3-shipcard.anchor { z-index: 3; }
+.ship-card { width: 220px; background: #fff7e3; color: #3a2a1a; border: 2.5px solid #3a2a1a; border-radius: 12px; padding: 6px 9px; box-shadow: 0 4px 0 rgba(58, 42, 26, 0.35); font: 12px/1.4 var(--body); position: relative; }
+.ship-card::after { content: ""; position: absolute; left: 50%; bottom: -11px; transform: translateX(-50%); border: 8px solid transparent; border-top-color: #3a2a1a; }
+.ship-card.needs { background: #ffe9b8; width: 240px; }
+.ship-card.running { background: #d9f7e9; }
+.ship-card .sc-title { font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ship-card .sc-what { color: #4a3a2a; margin-top: 1px; }
+.ship-card .sc-note { color: #7a6650; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ship-card .sc-cmd { display: block; margin: 4px 0; padding: 3px 6px; background: #fff; border: 1.5px solid #c9a66b; border-radius: 6px; font: 11px/1.35 var(--mono); white-space: pre-wrap; word-break: break-all; }
+.ship-card .sc-actions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.ship-card .sc-actions button { font: 700 11px var(--body); border: 2px solid #3a2a1a; border-radius: 9px; padding: 2px 9px; background: #fff7e3; color: #3a2a1a; cursor: pointer; }
+.ship-card .sc-actions button.primary { background: #ffd24a; }
+.ship-card.compact { width: auto; max-width: 190px; padding: 4px 9px; cursor: pointer; }
+.ship-card.compact:hover { background: #ffd24a; }
+.ship-card.run { background: #e6eefa; border-color: #2e5c8a; }
+.ship-card.run:hover { background: #cfe0f7; }
+.sc-bar { height: 5px; margin: 4px 0 2px; background: #fff; border-radius: 3px; overflow: hidden; }
+.sc-bar span { display: block; height: 100%; background: #2e5c8a; transition: width 0.5s; }
+.door-panel { position: absolute; top: 10px; right: 10px; bottom: 10px; width: min(400px, calc(100% - 20px)); z-index: 20; display: flex; flex-direction: column; overflow: hidden;
+  background: #fff7e3; color: #3a2a1a; border: 2.5px solid #3a2a1a; border-radius: 14px; box-shadow: 0 6px 0 rgba(58, 42, 26, 0.35); font: 13.5px/1.45 var(--body); }
+.door-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 12px; background: #ffe9b8; border-bottom: 2.5px solid #3a2a1a; }
+.door-title { font-weight: 700; font-size: 15px; flex: 1; }
+.door-kind { font-size: 12px; font-weight: 700; color: #7a6650; }
+.door-body { flex: 1; display: flex; flex-direction: column; gap: 9px; padding: 12px; overflow: auto; min-height: 0; }
+.door-about { border: 2px dashed #c9a66b; border-radius: 10px; padding: 6px 10px; background: #fffaf0; }
+.door-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #7a6650; }
+.door-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---- Products ---- */
+.products { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 30px; }
+.product { display: grid; gap: 6px; align-content: start; text-decoration: none; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--shadow); padding: 14px 16px; transition: transform 0.15s, background 0.15s; }
+.product:hover { background: #fff1c4; transform: translateY(-2px); }
+.product h3 { font-size: 1.25rem; }
+.product p { font-size: 0.92rem; color: var(--muted); }
+.product .go-to { font-weight: 700; font-size: 0.88rem; }
+@media (prefers-reduced-motion: reduce) { .product { transition: none; } .product:hover { transform: none; } }
+
+/* ---- Sections are door panels floating on the water ---- */
+main { padding-bottom: 20px; }
+main section.wrap { max-width: 1140px; margin: 34px auto 0; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 16px; box-shadow: 0 7px 0 var(--shadow); padding: 0 24px 26px; scroll-margin-top: 64px; }
+.sea-gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sec-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; align-items: center; margin: 0 -24px 22px; padding: 14px 24px; background: var(--paper-2); border-bottom: 2.5px solid var(--ink); border-radius: 13px 13px 0 0; }
+.sec-head p { grid-column: 1 / -1; color: var(--muted); max-width: 70ch; }
+
+/* ---- Layers ---- */
+.layers { display: grid; gap: 10px; }
+.layer { display: grid; grid-template-columns: 52px minmax(0, 1fr); background: var(--card); border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; }
+.layer .depth { background: var(--ink); color: var(--paper); display: grid; place-items: center; font-weight: 700; font-size: 1.4rem; }
+.layer button.head { all: unset; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; padding: 12px 16px; }
+.layer button.head:focus-visible { outline: 3px solid var(--flag); outline-offset: -4px; }
+.layer h3 { font-size: 1.2rem; }
+.layer .what { grid-column: 1; color: var(--muted); font-size: 0.93rem; }
+.layer .chev { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 700; font-size: 1.2rem; }
+.layer .more { padding: 0 16px 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.layer .more h5 { margin: 0 0 4px; font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.layer .more ul { margin: 0; padding-left: 18px; font-size: 0.93rem; }
+.arrow-note { display: flex; gap: 10px; align-items: center; margin-top: 14px; color: var(--muted); font-size: 0.93rem; }
+
+/* ---- Pipeline: bronze, silver, gold ---- */
+.medal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+.medal button { all: unset; cursor: pointer; position: relative; display: grid; gap: 4px; align-content: start; padding: 12px; border: 2.5px solid var(--ink); border-radius: 12px; background: var(--card); box-shadow: 0 4px 0 var(--shadow); }
+.medal button:focus-visible { outline: 3px solid var(--flag); outline-offset: 2px; }
+.medal button::after { content: "➜"; position: absolute; right: -13px; top: 50%; transform: translateY(-50%); font-weight: 700; z-index: 1; color: var(--ink); }
+.medal button:last-child::after { display: none; }
+.medal .nm { font-size: 1.15rem; font-weight: 700; text-transform: uppercase; }
+.medal .sub { font-size: 0.8rem; color: var(--muted); }
+.medal .src { background: var(--card); }
+.medal .bronze { background: var(--bronze-bg); }
+.medal .silver { background: var(--silver-bg); }
+.medal .gold { background: var(--gold-bg); }
+.medal .use { background: var(--stbd-bg); }
+.medal button[aria-pressed="true"] { transform: translateY(-3px); box-shadow: 0 7px 0 var(--shadow); outline: 3px solid var(--ink); outline-offset: 2px; }
+.medal .coin { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); }
+.coin.src { background: #fff; } .coin.bronze { background: var(--bronze); } .coin.silver { background: #b9c4cc; } .coin.gold { background: #f2c230; } .coin.use { background: #2fb37f; }
+.layer-detail { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 18px; }
+.layer-detail .what h3 { font-size: 1.35rem; margin-bottom: 6px; }
+.layer-detail ul { margin: 8px 0 0; padding-left: 18px; }
+.layer-detail li { margin: 3px 0; }
+.check { margin-top: 10px; background: var(--stbd-bg); border: 2px solid var(--ink); border-radius: 10px; padding: 7px 10px; font-size: 0.88rem; }
+.check b { display: block; font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase; }
+.sample { background: var(--card); border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; display: grid; min-width: 0; align-content: start; }
+.sample .cap { padding: 7px 10px; border-bottom: 2px solid var(--ink); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 0.82rem; font-weight: 700; }
+.tablewrap { overflow-x: auto; min-width: 0; }
+table.data { border-collapse: collapse; width: 100%; font: 0.76rem var(--mono); font-variant-numeric: tabular-nums; }
+table.data th { text-align: left; font: 700 0.66rem var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 5px 8px; border-bottom: 1.5px solid var(--rope); white-space: nowrap; }
+table.data td { padding: 5px 8px; border-bottom: 1px dotted var(--line); white-space: nowrap; }
+table.data td.fix { background: var(--signal-bg); }
+table.data td.bad { color: var(--port); }
+table.data td.num { text-align: right; }
+.sample .foot { padding: 7px 10px; font-size: 0.8rem; color: var(--muted); border-top: 1.5px solid var(--line); }
+.pipe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 20px; }
+.pcard { background: var(--card); border: 2px solid var(--ink); border-radius: 12px; padding: 12px 14px; display: grid; gap: 5px; align-content: start; }
+.pcard p { font-size: 0.9rem; color: var(--muted); }
+.stack { display: flex; flex-wrap: wrap; gap: 6px; }
+.stack span { font-size: 0.74rem; font-weight: 700; border: 2px solid var(--ink); border-radius: 9px; padding: 1px 8px; background: var(--card); }
+
+/* ---- Walkthrough ---- */
+.walk { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr); gap: 22px; align-items: start; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.steps button { all: unset; cursor: pointer; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 0 10px; padding: 8px 10px; border-radius: 10px; border: 2px solid transparent; width: 100%; box-sizing: border-box; }
+.steps button:hover { border-color: var(--ink); background: var(--card); }
+.steps button:focus-visible { outline: 3px solid var(--flag); }
+.steps button.on { border-color: var(--ink); background: var(--flag); box-shadow: 0 3px 0 var(--shadow); }
+.steps .n { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; align-self: center; }
+.steps .t { font-weight: 700; }
+.steps .s { font-size: 0.82rem; color: var(--muted); }
+.steps button.on .s { color: var(--ink); }
+.stage { background: var(--card); border: 2.5px solid var(--ink); border-radius: 14px; padding: 16px 18px; min-height: 420px; display: grid; gap: 12px; align-content: start; box-shadow: 0 4px 0 var(--shadow); }
+.stage h3 { font-size: 1.35rem; }
+.stage .why { border-top: 2px dashed var(--rope); padding-top: 10px; font-size: 0.93rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dchip { font: 700 0.74rem var(--body); border: 2px solid var(--ink); border-radius: 9px; padding: 1px 8px; background: var(--paper); text-decoration: none; cursor: pointer; }
+.dchip:hover { background: var(--flag); }
+.mock { border: 2px solid var(--rope); border-radius: 10px; background: #fff; padding: 10px 12px; font-size: 0.9rem; display: grid; gap: 7px; min-width: 0; }
+.mock .lbl { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mock textarea { width: 100%; font: 0.93rem var(--body); padding: 7px; border: 1.5px solid var(--rope); border-radius: 8px; background: var(--card); color: var(--ink); resize: none; }
+.mock ul { margin: 0; padding-left: 18px; }
+.ev { font: 0.77rem var(--mono); display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; padding: 4px 0; border-bottom: 1px dotted var(--line); }
+.ev:last-child { border-bottom: 0; }
+.pill { font: 700 0.64rem var(--body); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; padding: 1px 6px; text-align: center; align-self: start; border: 1.5px solid var(--ink); }
+.pill.allow { background: var(--stbd-bg); } .pill.ask { background: var(--signal-bg); } .pill.deny { background: var(--port-bg); }
+table.cells { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+table.cells th { text-align: left; font: 700 0.66rem var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px; border-bottom: 1.5px solid var(--rope); }
+table.cells td { padding: 4px 6px; border-bottom: 1px dotted var(--line); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.was { background: rgba(163, 45, 45, 0.12); } td.now { background: rgba(31, 122, 80, 0.14); }
+.fp { display: flex; flex-wrap: wrap; gap: 6px; }
+.fpf { font: 0.74rem var(--mono); padding: 3px 7px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--card); }
+.fpf.plan { border: 1.5px dashed var(--ink); } .fpf.read { border-color: var(--stbd); } .fpf.change { border-color: var(--signal); background: var(--signal-bg); } .fpf.unplanned { border-color: var(--port); background: var(--port-bg); }
+.meter { display: grid; gap: 5px; }
+.meter .track { position: relative; height: 14px; border-radius: 7px; background: var(--paper); border: 2px solid var(--ink); overflow: hidden; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; background: var(--sea); width: 0; transition: width 0.3s; }
+.meter .tick { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--flag); }
+.meter .tick.h { background: var(--port); }
+input[type="range"] { width: 100%; accent-color: var(--ink); }
+
+/* ---- Gate ---- */
+.gate { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 22px; }
+.ctrl { display: grid; gap: 12px; align-content: start; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { font: 700 0.8rem var(--body); border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 9px; padding: 3px 10px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--flag); box-shadow: 0 2px 0 var(--shadow); }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+select { font: 0.93rem var(--body); padding: 6px 9px; border-radius: 9px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); width: 100%; }
+.verdict { border: 2.5px solid var(--ink); border-radius: 14px; background: var(--card); padding: 14px 16px; display: grid; gap: 8px; align-content: start; box-shadow: 0 4px 0 var(--shadow); }
+.verdict .big { font-size: 2.2rem; font-weight: 700; text-transform: uppercase; line-height: 1; justify-self: start; padding: 4px 12px; border: 2.5px solid var(--ink); border-radius: 12px; }
+.verdict .big.allow { background: var(--stbd-bg); } .verdict .big.ask { background: var(--signal-bg); } .verdict .big.deny { background: var(--port-bg); }
+.verdict .tool { font: 0.78rem var(--mono); color: var(--muted); }
+.lock { font-size: 0.84rem; color: var(--muted); }
+table.rules { border-collapse: separate; border-spacing: 0; font-size: 0.78rem; width: 100%; border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; background: var(--card); }
+table.rules th, table.rules td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 5px 6px; text-align: center; }
+table.rules th { font: 700 0.64rem var(--body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: var(--paper-2); }
+table.rules th.a { text-align: left; font: 700 0.8rem var(--body); text-transform: none; letter-spacing: 0; color: var(--ink); background: var(--card); }
+table.rules td { cursor: pointer; font: 700 0.68rem var(--body); text-transform: uppercase; }
+table.rules td.allow { background: var(--stbd-bg); } table.rules td.ask { background: var(--signal-bg); } table.rules td.deny { background: var(--port-bg); }
+table.rules td.sel { outline: 3px solid var(--ink); outline-offset: -3px; }
+.hint { margin-top: 8px; font-size: 0.84rem; color: var(--muted); }
+
+/* ---- Operating system ---- */
+.os { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.loop { position: relative; aspect-ratio: 1; max-width: 440px; width: 100%; margin: 0 auto; }
+.loop svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.loop .ring-line { fill: none; stroke: var(--rope); stroke-width: 1.4; stroke-dasharray: 3 4; }
+.node { position: absolute; transform: translate(-50%, -50%); font: 700 0.76rem var(--body); border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 9px; padding: 3px 9px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 0 var(--shadow); }
+.node.cross { border-style: dashed; background: var(--paper-2); }
+.node[aria-pressed="true"] { background: var(--flag); }
+.loop .core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; width: 44%; }
+.loop .core b { display: block; font-size: 1.2rem; text-transform: uppercase; }
+.loop .core span { font-size: 0.78rem; color: var(--muted); }
+.skill { background: var(--card); border: 2.5px solid var(--ink); border-radius: 14px; padding: 16px; display: grid; gap: 8px; box-shadow: 0 4px 0 var(--shadow); }
+.skill .when { font-size: 0.9rem; color: var(--muted); }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 22px; }
+.principle { background: var(--card); border: 2px solid var(--ink); border-radius: 12px; padding: 10px 12px; }
+.principle b { display: block; margin-bottom: 3px; }
+.principle p { font-size: 0.9rem; color: var(--muted); }
+.learn { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 16px; }
+.learn div { padding: 10px 12px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 12px; font-size: 0.88rem; }
+.learn b { display: block; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.06em; }
+
+/* ---- Decisions ---- */
+.dtools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.dtools input { font: 0.93rem var(--body); padding: 6px 10px; border-radius: 9px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); flex: 1 1 220px; min-width: 0; }
+.dcount { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.dlist { display: grid; gap: 8px; }
+details.dec { background: var(--card); border: 2px solid var(--ink); border-radius: 12px; }
+details.dec[open] { background: #fff; box-shadow: 0 3px 0 var(--shadow); }
+details.dec summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; }
+details.dec summary::-webkit-details-marker { display: none; }
+details.dec .id { background: var(--ink); color: var(--paper); border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.85rem; padding: 2px 0; }
+details.dec .tt { font-weight: 700; }
+details.dec .th { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+details.dec .body { padding: 0 14px 14px 74px; display: grid; gap: 8px; }
+details.dec .body > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; }
+details.dec .k { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+details.dec.flash { animation: flash 1.6s; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 4px var(--flag); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { details.dec.flash { animation: none; box-shadow: 0 0 0 4px var(--flag); } }
+
+/* ---- Build ---- */
+.build { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 22px; align-items: start; }
+.voyage { list-style: none; margin: 0; padding: 0; display: grid; }
+.voyage li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 3px 12px; padding-bottom: 14px; position: relative; }
+.voyage li::before { content: ""; position: absolute; left: 12px; top: 26px; bottom: 0; width: 0; border-left: 2.5px dashed var(--rope); }
+.voyage li:last-child::before { display: none; }
+.voyage .dot { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid var(--ink); display: grid; place-items: center; font-weight: 700; font-size: 0.78rem; background: var(--card); }
+.voyage .done .dot { background: #2fb37f; color: #fff; }
+.voyage .part .dot { background: #f2a024; }
+.voyage .st { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px; padding: 1px 7px; border-radius: 8px; border: 1.5px solid var(--ink); }
+.voyage .done .st { background: var(--stbd-bg); } .voyage .part .st { background: var(--signal-bg); } .voyage .next .st { background: var(--card); color: var(--muted); }
+.voyage p { grid-column: 2; font-size: 0.9rem; color: var(--muted); }
+.role { background: var(--card); border: 2.5px solid var(--ink); border-radius: 14px; padding: 16px; display: grid; gap: 10px; box-shadow: 0 4px 0 var(--shadow); }
+.role ul { margin: 0; padding-left: 18px; font-size: 0.93rem; }
+.role li { margin: 4px 0; }
+
+footer { padding-block: 34px 34px; font-size: 0.86rem; }
+footer .box { max-width: 1140px; margin: 0 auto; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px 20px; justify-content: space-between; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .hero-grid, .walk, .gate, .os, .build, .layer-detail { grid-template-columns: minmax(0, 1fr); }
+  .products { grid-template-columns: minmax(0, 1fr); }
+  .medal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .medal button::after { display: none; }
+  .medal button:last-child { grid-column: 1 / -1; }
+  .stage { min-height: 0; }
+  .top nav { display: none; }
+  .live { height: 400px; }
+  details.dec .body { padding-left: 14px; }
+  details.dec .body > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  details.dec summary { grid-template-columns: 44px minmax(0, 1fr); }
+  details.dec .th { grid-column: 2; }
+}
+@media (max-width: 560px) {
+  main section.wrap { padding: 0 14px 20px; }
+  .sec-head { margin: 0 -14px 18px; padding: 12px 14px; }
+  .ship-card { width: 180px; } .ship-card.needs { width: 200px; }
+  .node { font-size: 0.66rem; padding: 2px 6px; }
+}
+
+/* Editorial portfolio shell. The interactive system remains intact; the framing now reads as
+   data and systems engineering rather than a product-demo interface. */
+:root {
+  --sky: #0a1d2f;
+  --sea: #e8edef;
+  --paper: #f3f6f6;
+  --paper-2: #dbe3e6;
+  --card: #fbfcfc;
+  --ink: #142a38;
+  --muted: #596b75;
+  --line: #c6d0d4;
+  --rope: #7c8f99;
+  --flag: #ff6b35;
+  --signal: #b43a2a;
+  --signal-bg: #f5d7cc;
+  --shadow: transparent;
+  --body: "Trebuchet MS", "Lucida Grande", "Segoe UI", system-ui, sans-serif;
+}
+body { background: var(--paper); color: var(--ink); font-size: 16px; }
+body::before { background: var(--sky); }
+h1, h2 { font-family: var(--body); font-weight: 700; }
+h3, h4 { font-family: var(--body); }
+h2 { font-size: clamp(2.25rem, 5vw, 4.7rem); line-height: 0.95; letter-spacing: -0.045em; text-transform: none; }
+.top { background: var(--sky); color: #f5f1e6; border-bottom: 1px solid rgba(245,241,230,0.28); }
+.top .wrap { padding-block: 15px; }
+.mark { font-size: 0.95rem; letter-spacing: 0.01em; }
+.mark i { width: 9px; height: 9px; background: var(--flag); border: 0; border-radius: 0; }
+.top nav a { font-size: 0.76rem; font-weight: 500; border: 0; border-radius: 0; padding: 4px 8px; color: rgba(255,255,255,0.78); }
+.top nav a:hover, .top nav a.on { color: #fff; background: transparent; box-shadow: inset 0 -2px var(--flag); }
+.zone { padding: 0; border-radius: 0; background: transparent; color: var(--signal); font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.13em; }
+.hero .zone, .live .zone { color: var(--flag); }
+.hero { max-width: none; padding: 42px max(16px, calc((100vw - 1140px) / 2)) 74px; color: #f5f1e6; background-color: var(--sky); background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; }
+.system-ref { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 28px; color: rgba(245,241,230,.48); font: 0.62rem var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.hero-grid { grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr); gap: clamp(32px, 7vw, 100px); align-items: end; }
+.hero h1 { max-width: 850px; color: #f5f1e6; font-size: clamp(3.5rem, 7.8vw, 7.5rem); line-height: 0.92; letter-spacing: -0.045em; text-transform: none; text-shadow: none; }
+.hero h1 em { color: var(--flag); font-style: normal; }
+.hero .eyebrow { margin-bottom: 22px; }
+.lede-card { margin: 0; padding: 0 0 5px; gap: 17px; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.lede { font-size: clamp(1.15rem, 2.2vw, 1.55rem); line-height: 1.38; }
+.byline { color: rgba(245,241,230,0.74); font-size: 0.92rem; line-height: 1.55; }
+.byline b { color: #f5f1e6; }
+.byline a { text-decoration-color: var(--flag); text-underline-offset: 3px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+.hero-actions a { color: var(--flag); font: 600 0.78rem var(--mono); text-decoration: none; border-bottom: 1px solid var(--flag); padding-bottom: 3px; }
+.hero-actions a::after { content: " \2192"; }
+.facts { gap: 0; border-top: 1px solid rgba(245,241,230,0.24); padding-top: 15px; }
+.fact { color: rgba(245,241,230,0.72); border-right: 1px solid rgba(245,241,230,0.24); border-radius: 0; background: transparent; padding: 0 14px; }
+.fact:first-child { padding-left: 0; }
+.fact:last-child { border-right: 0; }
+.fact b { color: #fff; }
+.products { gap: 0; margin-top: 78px; border-top: 1px solid rgba(245,241,230,0.3); border-bottom: 1px solid rgba(245,241,230,0.3); }
+.product { position: relative; padding: 24px 28px 27px 0; border: 0; border-right: 1px solid rgba(245,241,230,0.3); border-radius: 0; box-shadow: none; background: transparent; color: #f5f1e6; transition: background 0.15s; }
+.product + .product { padding-left: 28px; }
+.product:last-child { border-right: 0; }
+.product:hover { background: rgba(255,255,255,0.045); transform: none; }
+.product .label { color: var(--flag); font-family: var(--mono); }
+.product h3 { font-size: 1.45rem; margin: 8px 0 5px; }
+.product p { color: rgba(245,241,230,0.68); }
+.product .go-to { color: var(--flag); margin-top: 10px; font-family: var(--mono); font-size: 0.73rem; }
+.evidence-band { display: grid; grid-template-columns: minmax(230px,.65fr) minmax(0,1.35fr); gap: clamp(30px,6vw,86px); align-items: end; margin-top: 70px; padding: 36px 0 10px; border-top: 1px solid rgba(245,241,230,.3); }
+.evidence-band h2 { color: #f5f1e6; font-size: clamp(2rem,4vw,4rem); }
+.evidence-band p { color: rgba(245,241,230,.68); margin-top: 14px; max-width: 44ch; }
+.flow-bars { display: grid; gap: 14px; }
+.flow-row { display: grid; grid-template-columns: 125px minmax(0,1fr) 92px; gap: 12px; align-items: center; font: 0.75rem var(--mono); }
+.flow-row strong { font-weight: 600; }
+.flow-track { height: 22px; background: rgba(245,241,230,.12); }
+.flow-track i { display: block; height: 100%; background: var(--flag); }
+.flow-row:nth-child(2) .flow-track i { background: #ff9a62; }
+.flow-row:nth-child(3) .flow-track i { background: #c9d5da; }
+.flow-row:nth-child(4) .flow-track i { background: #62a8c4; }
+.flow-total { grid-column: 1 / -1; border-top: 1px solid rgba(245,241,230,.24); padding-top: 12px; color: rgba(245,241,230,.68); }
+.live-showcase { margin-top: 64px; }
+.live-intro { display: flex; justify-content: space-between; gap: 30px; align-items: end; margin-bottom: 14px; }
+.live-intro h2 { color: #f5f1e6; font-size: clamp(2rem,4vw,4.25rem); }
+.live-intro p { color: rgba(245,241,230,.68); max-width: 48ch; }
+.live { height: 560px; border: 1px solid rgba(245,241,230,.34); border-radius: 0; box-shadow: none; }
+.live-note { margin-top: 10px; color: rgba(245,241,230,.7); font-weight: 400; justify-content: space-between; }
+.btn { border: 1px solid currentColor; border-radius: 0; font-family: var(--mono); font-size: 0.72rem; }
+.live-note .btn { background: transparent; color: var(--flag); }
+.live-note .btn:hover { background: var(--flag); color: var(--sky); }
+.sea-gutter { padding: 0; background: var(--paper); }
+main { padding: 0; }
+main section.wrap { max-width: 1140px; margin: 0 auto; padding: 90px 16px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; background: transparent; scroll-margin-top: 62px; }
+.sec-head { grid-template-columns: minmax(0,.9fr) minmax(300px,1.1fr); gap: 20px 70px; align-items: end; margin: 0 0 46px; padding: 0 0 30px; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.sec-head .zone { grid-column: 1 / -1; }
+.sec-head p { grid-column: 2; color: var(--muted); max-width: 58ch; }
+.sec-head h2 { grid-row: 2; }
+.layer, .medal button, .sample, .pcard, .check, .step, .stage, .mock, .verdict, .skill, .principle, .learn div, details.dec, .role, footer .box, .tag, .stack span, .dchip { border-width: 1px; border-radius: 0; box-shadow: none; }
+.layer { background: transparent; border-color: var(--line); }
+.layer .depth { background: var(--sky); }
+.pcard, .principle, .role { background: var(--card); border-color: var(--line); }
+.check { background: #e2ead3; border-color: #b5c19f; padding: 18px 20px; }
+.stack span { font-family: var(--mono); font-weight: 500; border-color: var(--line); }
+.source-map { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.source-card { display: grid; align-content: start; gap: 8px; min-height: 230px; padding: 22px; background: var(--card); }
+.source-card .route { color: var(--signal); font: 600 .66rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.source-card h3 { font-size: 1.35rem; }
+.source-card p { color: var(--muted); font-size: .91rem; }
+.source-card .method { align-self: end; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink); font: .69rem var(--mono); }
+.stream-convergence { margin-bottom: 42px; }
+.stream-feeds { width: 75%; height: 34px; display: grid; grid-template-columns: repeat(4,1fr); }
+.stream-feeds i { display: block; border-left: 1px solid var(--signal); }
+.stream-feeds i:last-child { border-right: 1px solid var(--signal); }
+.collector { width: 75%; margin: 0 auto; padding: 8px 12px 14px; border-top: 1px solid var(--signal); color: var(--signal); text-align: center; font: 600 .65rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.collector::after { content: ""; display: block; width: 1px; height: 24px; margin: 12px auto -14px; background: var(--signal); }
+.core-flow { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: stretch; }
+.core-step { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); background: var(--card); }
+.core-step b { font-size: 1rem; }
+.core-step span { color: var(--muted); font-size: .78rem; }
+.core-step.bronze { border-top: 5px solid var(--bronze); }
+.core-step.silver { border-top: 5px solid var(--silver); }
+.core-step.gold { border-top: 5px solid var(--gold); }
+.core-step.output { border-top: 5px solid var(--flag); }
+.flow-arrow { align-self: center; color: var(--signal); font: 600 1.25rem var(--mono); }
+.trace-note { margin: -18px 0 18px; color: var(--muted); font-size: .86rem; }
+details.dec { border-color: var(--line); }
+details.dec[open] { box-shadow: none; }
+.dtools input { border-width: 1px; border-radius: 0; }
+.role { padding: 22px; }
+.role-intro { color: var(--muted); font-size: .94rem; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+footer { padding: 0; background: var(--sky); color: #f5f1e6; }
+footer .box { max-width: 1140px; padding: 34px 16px; border: 0; background: transparent; color: rgba(245,241,230,.72); }
+footer a { color: var(--flag); }
+@media (max-width: 900px) {
+  .hero { padding-top: 42px; }
+  .hero-grid, .evidence-band, .sec-head { grid-template-columns: minmax(0,1fr); }
+  .sec-head p { grid-column: 1; }
+  .sec-head h2 { grid-row: auto; }
+  .products { grid-template-columns: minmax(0,1fr); }
+  .product, .product + .product { padding: 22px 0; border-right: 0; border-bottom: 1px solid rgba(245,241,230,.3); }
+  .product:last-child { border-bottom: 0; }
+  .live-intro { display: grid; }
+  .live { height: 440px; }
+  .source-map { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .stream-feeds { display: none; }
+  .collector { width: 100%; border-top: 0; }
+}
+@media (max-width: 560px) {
+  .hero { padding-inline: 16px; }
+  .hero h1 { font-size: clamp(3rem,16vw,5.2rem); }
+  .flow-row { grid-template-columns: 92px minmax(0,1fr); }
+  .flow-row span:last-child { grid-column: 2; }
+  main section.wrap { padding: 66px 16px; }
+  .sec-head { margin: 0 0 34px; padding: 0 0 24px; }
+  .live { height: 370px; }
+  .source-map { grid-template-columns: minmax(0,1fr); }
+  .source-card { min-height: 0; }
+  .core-flow { grid-template-columns: minmax(0,1fr); }
+  .flow-arrow { justify-self: center; transform: rotate(90deg); }
+}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#top"><i aria-hidden="true"></i>Ilyes Benmaamar</a>
+    <nav aria-label="Sections">
+      <a href="#layers">Layers</a><a href="#pipeline">Pipeline</a><a href="#task">Harbour</a><a href="#gate">The gate</a><a href="#os">Operating system</a><a href="#decisions">Decisions</a><a href="#build">Build</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ================= Hero ================= -->
+  <div class="hero wrap">
+    <div class="system-ref"><span>System 01 · Shipping data and AI control</span><span>London · 51.5074° N</span></div>
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow"><span class="zone">Data engineering · AI systems · Shipping markets</span></div>
+        <h1>Data systems, with <em>AI</em> as the control layer.</h1>
+      </div>
+      <div class="lede-card">
+        <p class="lede">A multi-source market-data pipeline, a visual workspace for steering agents, and a portable operating system that connects them. APIs, scrapers, browser handoffs and source workbooks all enter one governed path to inspected, evidence-backed outputs.</p>
+        <p class="byline"><b>I engineered the system and directed the agents that built it.</b> I translated real analytical work into an architecture, decomposed it into bounded tasks, controlled the agents' context and permissions, and defined the evidence required for acceptance. I reviewed, challenged and redirected the implementation against real data and working practices. Claude Code and Codex generated the code; the domain reasoning, orchestration and final judgement were mine.</p>
+        <div class="hero-actions">
+          <a href="#pipeline">Explore the pipeline</a>
+          <a href="#os">How the system works</a>
+        </div>
+        <div class="facts" aria-label="The design in numbers">
+          <span class="fact"><b>12</b>connectors</span><span class="fact"><b>6</b>acquisition methods</span><span class="fact"><b>3</b>quality layers</span>
+        </div>
+      </div>
+    </div>
+    <div class="products" aria-label="The three pieces of work">
+      <a class="product" href="#pipeline"><span class="label">01 · Data foundation</span><h3>Multi-source data pipeline</h3><p>Customs statistics, licensed trade feeds and government energy data acquired through different methods, then standardised into one bronze, silver and gold system.</p><span class="go-to">Follow the sources →</span></a>
+      <a class="product" href="#task"><span class="label">02 · Visual interface</span><h3>Harbour View</h3><p>The pipeline drawn as a working harbour, where agents operate on safe copies and requests arrive as visible ships.</p><span class="go-to">Follow a task →</span></a>
+      <a class="product" href="#os"><span class="label">03 · Control system</span><h3>AI Operating System</h3><p>Portable rules for context, authority, evidence and learning across agents, repositories and analytical work.</p><span class="go-to">See the system →</span></a>
+    </div>
+
+    <div class="evidence-band" aria-labelledby="flow-title">
+      <div>
+        <span class="zone">Code only · no data published</span>
+        <h2 id="flow-title">Twelve connectors, six ways in.</h2>
+        <p>The connectors are the code, not the data. Each one is tested offline on small made-up fixtures; real data only exists where the pipeline runs with its own keys and licences.</p>
+      </div>
+      <div class="flow-bars" role="img" aria-label="Connectors by acquisition method: 4 official APIs, 3 scrapers, 1 browser handoff, 1 portal download, 1 drop zone, 2 licensed feeds">
+        <div class="flow-row"><strong>Official APIs</strong><div class="flow-track"><i style="width:100%"></i></div><span>4 connectors</span></div>
+        <div class="flow-row"><strong>Scrapers</strong><div class="flow-track"><i style="width:75%"></i></div><span>3 connectors</span></div>
+        <div class="flow-row"><strong>Browser handoff</strong><div class="flow-track"><i style="width:25%"></i></div><span>1 connector</span></div>
+        <div class="flow-row"><strong>Portal download</strong><div class="flow-track"><i style="width:25%"></i></div><span>1 connector</span></div>
+        <div class="flow-row"><strong>Drop zone</strong><div class="flow-track"><i style="width:25%"></i></div><span>1 connector</span></div>
+        <div class="flow-row"><strong>Licensed feeds</strong><div class="flow-track"><i style="width:50%"></i></div><span>2 connectors</span></div>
+        <div class="flow-total">official APIs · scrapers · browser handoff · portal download · drop zone · licensed feeds</div>
+      </div>
+    </div>
+
+    <div class="live-showcase">
+      <div class="live-intro">
+        <div><span class="zone">Interactive system view</span><h2>The pipeline becomes a place you can steer.</h2></div>
+        <p>Harbour View turns repositories, runs and agent requests into a spatial interface. This is the working renderer on the invented Northwind repository.</p>
+      </div>
+      <div class="live" id="live">
+        <div class="live-cap"><span class="zone">Harbour View · live</span></div>
+        <div id="h3"></div>
+      </div>
+      <div class="live-note"><span>Click a place to inspect it. Open a ship to answer an agent request.</span><button class="btn" id="reset-ships" type="button">Reset the ships</button></div>
+    </div>
+  </div>
+
+  <div class="sea-gutter">
+  <!-- ================= Layers ================= -->
+  <section id="layers" class="wrap">
+    <div class="sec-head"><span class="zone">1 · Layers</span><h2>Three layers</h2>
+      <p>Three repositories with one rule between them: each layer reads the one beneath it and never the other way round. The tool stays generic, and everything specific to a company stays with that company's own code.</p></div>
+    <div class="layers" id="layer-list"></div>
+    <div class="arrow-note"><span class="tag">reads ↓</span>Delete the harbour's description from the pipeline and the pipeline still runs; point the harbour at another repository and it draws that one.</div>
+  </section>
+
+  <!-- ================= Pipeline ================= -->
+  <section id="pipeline" class="wrap">
+    <div class="sec-head"><span class="zone">2 · The work</span><h2>The data pipeline</h2>
+      <p>A monthly market-data system built on the medallion pattern. National customs statistics, licensed vessel movements, a licensed chemical-trade dataset and government energy statistics arrive through different routes, but each is preserved in bronze, conformed in silver and exposed as analysis-ready gold tables and workbooks.</p></div>
+    <div class="source-map" aria-label="Pipeline sources and acquisition methods">
+      <article class="source-card"><span class="route">Country trade statistics</span><h3>Customs</h3><p>National customs statistics arrive via official APIs, scrapers and browser handoffs, each country in its own format and on its own schedule. Every route is followed by schema and period validation.</p><span class="method">API · browser automation · scraper · validated handoff</span></article>
+      <article class="source-card"><span class="route">Observed vessel movements</span><h3>Vessel flows</h3><p>Raw trade-flow partitions from a licensed vessel-flow feed are ingested from a drop zone, preserved with lineage and transformed into consistent product, route and period tables.</p><span class="method">Partitioned source files · incremental drop-zone refresh</span></article>
+      <article class="source-card"><span class="route">Chemical-gas trade</span><h3>Chemical trade</h3><p>Periodic releases of a licensed chemical-trade dataset and a controlled country mapping are normalised into monthly and annual route tables for chemical-gas analysis.</p><span class="method">Workbook ingestion · mapping · route transformation</span></article>
+      <article class="source-card"><span class="route">Energy movements</span><h3>Energy statistics</h3><p>The latest monthly release of government energy statistics is reconciled with the local master, converted from barrels to tonnes and appended into the canonical store with source attribution.</p><span class="method">Monthly spreadsheet release · master update · unit conversion</span></article>
+    </div>
+    <div class="stream-convergence" aria-label="Four different source streams converge into one governed medallion pipeline">
+      <div class="stream-feeds" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="collector">Different acquisition methods · one source contract and lineage standard</div>
+      <div class="core-flow">
+        <div class="core-step bronze"><b>Bronze</b><span>Raw source preserved exactly as received</span></div><span class="flow-arrow">→</span>
+        <div class="core-step silver"><b>Silver</b><span>Types, units, countries and periods conformed</span></div><span class="flow-arrow">→</span>
+        <div class="core-step gold"><b>Gold</b><span>Commodity, route and analysis tables</span></div><span class="flow-arrow">→</span>
+        <div class="core-step output"><b>Working outputs</b><span>DuckDB queries, Excel models and forecasts</span></div>
+      </div>
+    </div>
+    <p class="trace-note">The interactive trace below follows a few customs records so the transformation is readable. The same bronze, silver, gold and validation discipline governs every source family.</p>
+    <div class="medal" id="medal" role="group" aria-label="Pipeline layers"></div>
+    <div class="layer-detail" id="layer-detail" aria-live="polite"></div>
+    <div class="pipe-grid">
+      <div class="pcard"><h3>Operations console</h3><p>One console runs it: start a step or the whole monthly sequence, watch live stage progress, read past runs, query the data, and browse outputs and charts.</p></div>
+      <div class="pcard"><h3>Every run on record</h3><p>Each step is saved with its stages, timing, exit code and output. A lock stops two runs clashing and clears itself if a run dies.</p></div>
+      <div class="pcard"><h3>Checked before it ships</h3><p>Workbook cells are reconciled against gold, a wiring gate checks that formulas point where they should, and the finished workbooks are validated.</p></div>
+      <div class="pcard"><h3>Connected to the harbour</h3><p>The pipeline describes itself in a small folder Harbour View reads, so each run sails out as a blue ship and the refinery opens its console.</p></div>
+    </div>
+    <div class="stack" style="margin-top:14px"><span>Python</span><span>DuckDB · Parquet</span><span>official APIs</span><span>browser automation · scrapers</span><span>workbook ingestion</span><span>Streamlit console</span><span>Excel outputs</span><span>run records · locks · progress</span></div>
+    <div class="check" style="margin-top:16px">
+      <b>How it is checked</b>
+      <p>Twelve connectors cover six acquisition methods: four official APIs, three scrapers, a browser handoff, a portal download, a drop zone and two licensed feeds. Every connector is tested offline on small made-up fixtures, and the build fails closed on any quality or reconciliation breach. Code available on request.</p>
+    </div>
+  </section>
+
+  <!-- ================= Walkthrough ================= -->
+  <section id="task" class="wrap">
+    <div class="sec-head"><span class="zone">3 · Harbour View</span><h2>A task, from ask to merge</h2>
+      <p>One request followed end to end: raise a growth assumption in the forecast workbook. Each step is a point where I can see and steer before the work costs anything. The chips name the decisions behind each step.</p></div>
+    <div class="walk">
+      <ol class="steps" id="steps"></ol>
+      <div class="stage" id="stage" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ================= Gate ================= -->
+  <section id="gate" class="wrap">
+    <div class="sec-head"><span class="zone">4 · Harbour View</span><h2>The gate</h2>
+      <p>Every action an agent attempts reaches the workspace first and is decided by one rulebook: an action, at a place, set to allow, ask or deny. Claude and Codex name their tools differently; both are translated into the same actions, so a rule changed once holds for every AI. Try it.</p></div>
+    <div class="gate">
+      <div class="ctrl">
+        <div><div class="label" id="lbl-agent">Agent</div><div class="seg" id="agent" role="group" aria-labelledby="lbl-agent"></div></div>
+        <div><label class="label" for="action">Action</label><select id="action"></select></div>
+        <div><div class="label" id="lbl-place">Place</div><div class="seg" id="place" role="group" aria-labelledby="lbl-place"></div></div>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+      </div>
+      <div>
+        <div class="label" style="margin-bottom:6px">The default rulebook · click any cell</div>
+        <div class="tablewrap"><table class="rules" id="rules"></table></div>
+        <p class="hint">Defaults come from decision D11 and became an editable rulebook in D18. Edits to real files are locked: they only ever happen through change cards I approve.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= OS ================= -->
+  <section id="os" class="wrap">
+    <div class="sec-head"><span class="zone">5 · The control layer</span><h2>The AI Operating System</h2>
+      <p>The portable layer between human judgement, AI agents and real data work. It defines what context matters, what an agent may do, how work is checked and how a useful method becomes reusable. Harbour View makes those controls visible and enforces them in software.</p></div>
+    <div class="os">
+      <div class="loop" id="loop">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-line" cx="50" cy="50" r="38"/></svg>
+        <div class="core"><b>Small contract</b><span>A few lines, always loaded. Everything else is a skill, loaded on demand.</span></div>
+      </div>
+      <div class="skill" id="skill" aria-live="polite"></div>
+    </div>
+    <div class="principles">
+      <div class="principle"><b>Keep context minimal</b><p>A short shared contract, with methods as skills retrieved only when the task calls for them.</p></div>
+      <div class="principle"><b>Evidence before "done"</b><p>Validation proportionate to how reversible a change is and how far it reaches; skipped checks are stated.</p></div>
+      <div class="principle"><b>No inferred permission</b><p>External writes, destructive changes and communication are never assumed. Harbour View's gate is this rule made concrete.</p></div>
+      <div class="principle"><b>Learning is reviewed</b><p>A correction becomes a candidate with evidence and scope; persistent instructions change only after a review decision.</p></div>
+    </div>
+    <div class="learn" aria-label="How a lesson is promoted">
+      <div><b>Noticed</b>"I keep losing work when the context fills, especially across different AIs."</div>
+      <div><b>Candidate</b>Proposal 0001: checkpoint to a task branch with a handoff note any agent can read.</div>
+      <div><b>Reviewed</b>Accepted, with one standing exception: checkpoint commits on a task's own branch need no asking.</div>
+      <div><b>In force</b>A context-handoff skill in the operating system; meters, checkpoints and the switch to Codex in Harbour View (D16).</div>
+    </div>
+    <div class="check" style="margin-top:16px">
+      <b>What the system contains</b>
+      <p>The portable layer: ten conditional skills, five provider-neutral schemas, Codex and Claude adapters, decision proposals, synthetic evaluations, worked control records and automated validation. It also explains the authorship model: I designed the system and directed the work; AI agents generated the implementation. Code available on request.</p>
+    </div>
+  </section>
+
+  <!-- ================= Decisions ================= -->
+  <section id="decisions" class="wrap">
+    <div class="sec-head"><span class="zone">6 · Record</span><h2>Decision log</h2>
+      <p>Every significant choice is written down as it is made: the decision, why, and what evidence would reopen it. Reversals are marked rather than deleted. This is the record the AI agents read before they change anything.</p></div>
+    <div class="dtools">
+      <input id="dq" type="search" placeholder="Search decisions, e.g. Excel, approval, Codex" aria-label="Search decisions">
+      <div class="seg" id="dthemes" role="group" aria-label="Filter by theme"></div>
+      <span class="dcount" id="dcount"></span>
+    </div>
+    <div class="dlist" id="dlist"></div>
+  </section>
+
+  <!-- ================= Build ================= -->
+  <section id="build" class="wrap">
+    <div class="sec-head"><span class="zone">7 · Build</span><h2>Harbour View's build</h2>
+      <p>The interaction model was agreed by clicking through a prototype first, then built in seven steps, each ending in something I could open and try on a demo repository before it touched real work.</p></div>
+    <div class="build">
+      <ol class="voyage" id="voyage"></ol>
+      <div class="role">
+        <h3>Systems design and agent direction</h3>
+        <p class="role-intro">I did not pass a broad idea to an AI and accept whatever came back. I designed the operating model, divided the work into controlled pieces, inspected the evidence and remained accountable for what entered the system.</p>
+        <ul>
+          <li>Turned operational data problems into specifications, interfaces and testable acceptance criteria.</li>
+          <li>Decomposed the build into bounded tasks and steered Claude Code and Codex with the context each task required.</li>
+          <li>Set the authority model: agents work freely on a copy, but commands, external access and changes to real files pass explicit gates.</li>
+          <li>Reviewed plans before implementation and required evidence before accepting completion.</li>
+          <li>Tested outputs against the real pipeline, Excel workflows and failure conditions, then redirected agents when the result was unsafe, generic or operationally wrong.</li>
+          <li>Recorded every significant product and engineering decision, including why each choice was made and what evidence would reopen it.</li>
+          <li>Converted successful methods into reusable skills, provider-neutral schemas and control records that work across agents.</li>
+          <li>Kept the layers separate: company data stays in the pipeline, the workspace remains generic, and the operating system stays portable.</li>
+        </ul>
+        <div class="label">Built with</div>
+        <div class="stack"><span>Python · FastAPI</span><span>SQLite</span><span>ES modules, no build</span><span>three.js</span><span>Claude Code hooks</span><span>Codex app-server</span><span>git worktrees</span><span>openpyxl</span><span>Excel automation</span><span>Playwright</span></div>
+      </div>
+    </div>
+  </section>
+  </div>
+</main>
+
+<footer class="sea-gutter">
+  <div class="box">
+    <span>The data pipeline, Harbour View and the AI Operating System · Ilyes Benmaamar · 2026</span>
+    <span>Examples use an invented company, Northwind Shipping Analytics. No employer data appears here.</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Harbour View's own 3D renderer (web/harbour3d.js), inlined unchanged apart from its imports. */
+(() => {
+// The harbour view in 3D (D12, D20): the home repository's harbour.json drawn as the cel-shaded
+// storybook harbour of docs/concepts/harbour-skin.html. Same data, same places, pipes and task
+// ships as the flat view, and the same card on click. Like the flat view, it only displays what
+// the service reports. Uses three.js r128, vendored in web/vendor (no internet at runtime, D7).
+
+const TASK_FLAG = { preparing: "#4f8fe0", running: "#2fb37f", waiting: "#f2a024", finished: "#fff7e3", failed: "#e0554f", stopped: "#b9a78f", interrupted: "#b9a78f" };
+function fillCard() {}
+
+const LIVE = new Set(["preparing", "running", "waiting"]);
+const LAND_TOP = 5.4;
+// Spacing and camera. `window.__vwHarbourLayout` can override any of these, to compare looks.
+// The defaults are the "wide coastline" look the user chose from four options (D20).
+const LAYOUT = {
+  colX: 140, // world units between columns of the data flow
+  rowZ: 64, // between places stacked in one column
+  quayGap: 135, // at least this far apart along the quay
+  coastZ: 100, // how far inland the first row of coast places stands
+  seaZ: 72, // how far out the first row of water places stands
+  pitch: 0.4, // camera height: 0 is the horizon, 1.2 nearly overhead
+  yaw: 0,
+  fit: 0.9, // smaller is closer
+  focus: 0.26, // 0 centres on the land, 1 on the sea lane
+  margin: 190, // room around the outermost places, so they and their labels aren't cut off
+};
+
+const savedView = {}; // the user's camera: yaw, pitch and zoom
+
+function webglAvailable() {
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(window.THREE && (canvas.getContext("webgl2") || canvas.getContext("webgl")));
+  } catch {
+    return false;
+  }
+}
+
+function html(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function drawHarbour3D(container, data, tasks, handlers) {
+  const L = { ...LAYOUT, ...(window.__vwHarbourLayout || {}) };
+  const THREE = window.THREE;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const places = data.places.map((p) => ({ ...p }));
+  const byId = new Map(places.map((p) => [p.id, p]));
+
+  // ---- Stage: canvas, floating labels and the place card ----
+  const stage = html("div", "harbour3d");
+  const canvas = html("canvas");
+  const tagLayer = html("div", "h3-tags");
+  const card = html("div", "hb-card h3-card");
+  card.hidden = true;
+  const hint = html("div", "h3-hint", "Drag to look around, scroll to zoom. Click a place or a ship.");
+  stage.append(canvas, tagLayer, card, hint);
+  container.replaceChildren(stage);
+  if (data.warnings?.length) {
+    const notes = html("details", "hb-warnings");
+    notes.append(html("summary", "", `${data.warnings.length} thing${data.warnings.length === 1 ? "" : "s"} on the map no longer match the repository`));
+    for (const warning of data.warnings) notes.append(html("div", "warning", warning));
+    container.prepend(notes);
+  }
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xbfe9ff, 380, 900);
+  const cam = new THREE.PerspectiveCamera(40, 1, 0.5, 4000);
+
+  // ---- Toon materials with dark outline shells, as in the concept ----
+  const tones = new THREE.DataTexture(new Uint8Array([95, 95, 95, 255, 185, 185, 185, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat);
+  tones.minFilter = tones.magFilter = THREE.NearestFilter;
+  tones.needsUpdate = true;
+  const grey = (c) => { const col = new THREE.Color(c); const l = col.r * 0.3 + col.g * 0.59 + col.b * 0.11; return col.lerp(new THREE.Color(l, l, l), 0.8); };
+  const outlines = {};
+  const outlineMat = (w) => outlines[w] ||= new THREE.ShaderMaterial({
+    side: THREE.BackSide, uniforms: { w: { value: w } },
+    vertexShader: "uniform float w; void main(){ vec3 p = position + normal * w; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+    fragmentShader: "void main(){ gl_FragColor = vec4(0.16, 0.12, 0.10, 1.0); }",
+  });
+  // A material factory per place: dormant places are greyed, planned ones ghostly.
+  const paint = (status = "active") => (c, extra = {}) => {
+    const opts = { color: status === "dormant" ? grey(c) : new THREE.Color(c), gradientMap: tones, ...extra };
+    if (status === "planned") Object.assign(opts, { transparent: true, opacity: 0.42, depthWrite: false });
+    return new THREE.MeshToonMaterial(opts);
+  };
+  const T = paint();
+  function add(geo, mat, x, y, z, parent = scene, w = 0.32) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    if (w > 0 && !mat.transparent) m.add(new THREE.Mesh(geo, outlineMat(w)));
+    parent.add(m);
+    return m;
+  }
+
+  // ---- Layout: like the flat view, places stand where their data flows ----
+  const piped = new Set(places.flatMap((p) => (p.feeds.length ? [p.id, ...p.feeds] : [])));
+  const flowCols = Math.max(0, ...places.filter((p) => piped.has(p.id)).map((p) => p.column));
+  const stacks = {};
+  const quay = [];
+  for (const place of places) {
+    if (place.side === "harbour") { quay.push(place); continue; }
+    const col = piped.has(place.id) ? place.column : flowCols;
+    (stacks[`${place.side}:${col}`] ||= []).push(place);
+  }
+  const ncols = flowCols + 1;
+  const spanX = Math.max(ncols * L.colX, quay.length * L.quayGap, 200);
+  const rows = (side) => Math.max(1, ...Object.entries(stacks).filter(([k]) => k.startsWith(side)).map(([, v]) => v.length));
+  const at = {};
+  for (const [key, stack] of Object.entries(stacks)) {
+    const [side, col] = key.split(":");
+    stack.forEach((place, i) => {
+      const x = (Number(col) - (ncols - 1) / 2) * L.colX;
+      at[place.id] = side === "demand" ? V(x, LAND_TOP, -L.coastZ - i * L.rowZ) : V(x, 0, L.seaZ + i * L.rowZ);
+    });
+  }
+  const quayGap = spanX / Math.max(1, quay.length);
+  quay.forEach((place, i) => { at[place.id] = V(-spanX / 2 + quayGap * (i + 0.5), 3, -26); });
+  const landDepth = L.coastZ - 8 + rows("demand") * L.rowZ;
+  const seaFar = L.seaZ + rows("supply") * L.rowZ + 30;
+  const nearZ = -L.coastZ - (rows("demand") - 1) * L.rowZ; // the furthest place inland
+  const farZ = L.seaZ + (rows("supply") - 1) * L.rowZ + 45; // the task ships' lane, just beyond the furthest water place
+
+  // ---- Sky, light, water, land ----
+  const sky = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    vertexShader: "varying vec3 p; void main(){ p = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+    fragmentShader: "varying vec3 p; void main(){ float h = clamp(p.y * 1.4, 0.0, 1.0); vec3 c = mix(vec3(0.80,0.95,1.0), vec3(0.22,0.60,0.98), smoothstep(0.0, 0.7, h)); gl_FragColor = vec4(c, 1.0); }",
+  });
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(2000, 32, 16), sky));
+  scene.add(new THREE.HemisphereLight(0xfff6dc, 0x5aa0c8, 0.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.95);
+  sun.position.set(-140, 190, 110);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  const reach = Math.max(spanX, landDepth + seaFar) * 0.7;
+  Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 10, far: 900 });
+  scene.add(sun);
+
+  const clouds = [];
+  for (const [x, y, z, s] of [[-420, 150, -620, 26], [-150, 190, -700, 34], [160, 165, -640, 28], [420, 200, -720, 36], [620, 140, -560, 24]]) {
+    const g = new THREE.Group();
+    for (const [a, b, c, r] of [[0, 0, 0, 1], [1.1, -0.15, 0.1, 0.8], [-1.1, -0.2, 0, 0.75], [0.5, 0.5, -0.2, 0.7], [-0.5, 0.4, 0.2, 0.65]]) {
+      add(new THREE.SphereGeometry(r * s, 18, 12), T(0xffffff, { fog: false }), a * s, b * s, c * s, g, 0.9);
+    }
+    g.position.set(x, y, z);
+    scene.add(g);
+    clouds.push(g);
+  }
+
+  const waterGeo = new THREE.PlaneGeometry(1800, 1800, 120, 120);
+  waterGeo.rotateX(-Math.PI / 2);
+  const waterBase = waterGeo.attributes.position.array.slice();
+  const water = new THREE.Mesh(waterGeo, T(0x1769c4));
+  water.receiveShadow = true;
+  scene.add(water);
+  const swirlTex = (() => {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 96;
+    const x = c.getContext("2d"); x.strokeStyle = "rgba(255,255,255,0.95)"; x.lineWidth = 7; x.lineCap = "round";
+    x.beginPath(); x.moveTo(14, 70); x.bezierCurveTo(60, 20, 100, 20, 128, 56); x.bezierCurveTo(150, 80, 186, 70, 200, 48); x.stroke();
+    return new THREE.CanvasTexture(c);
+  })();
+  const swirls = [];
+  for (let i = 0; i < 50; i++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(18, 6.8), new THREE.MeshBasicMaterial({ map: swirlTex, transparent: true, depthWrite: false, opacity: 0 }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(-spanX / 2 - 60 + Math.random() * (spanX + 120), 0.9, 10 + Math.random() * seaFar);
+    scene.add(m);
+    swirls.push({ m, ph: Math.random() * 6.28, sp: 1 + Math.random() * 2 });
+  }
+
+  const landW = spanX + 160;
+  const sand = T(0xf0d79a);
+  add(new THREE.BoxGeometry(landW, 7, landDepth + 20), sand, 0, 0, -38 - (landDepth + 20) / 2);
+  add(new THREE.BoxGeometry(landW - 8, 2, landDepth - 4), T(0x79c64e), 0, 4.4, -46 - (landDepth - 4) / 2, scene, 0.2);
+  add(new THREE.BoxGeometry(landW, 4, 26), T(0xe8cf9a), 0, 1, -26, scene, 0.25); // the quay
+  for (let i = 0; i < Math.ceil(landW / 70); i++) {
+    const h = add(new THREE.SphereGeometry(48 + (i % 3) * 16, 20, 12), T(i % 2 ? 0x5fb043 : 0x6cbd4a), -landW / 2 + 30 + i * 70, -8, -40 - landDepth - (i % 2) * 26, scene, 0.6);
+    h.scale.y = 0.55 + (i % 3) * 0.12;
+  }
+  const tree = (x, z, s = 1) => {
+    const g = new THREE.Group();
+    add(new THREE.CylinderGeometry(0.6 * s, 0.8 * s, 4 * s, 8), T(0x8a5a2b), 0, 2 * s, 0, g, 0.2);
+    add(new THREE.SphereGeometry(3.4 * s, 14, 10), T(0x3f9a3a), 0, 6 * s, 0, g, 0.3);
+    g.position.set(x, LAND_TOP, z);
+    scene.add(g);
+  };
+  for (let i = 0; i < 10; i++) tree(-landW / 2 + 14 + ((i * 97) % (landW - 28)), -50 - ((i * 53) % Math.max(20, landDepth - 30)), 0.9 + (i % 3) * 0.2);
+
+  // ---- Place models, one per "look" in harbour.json ----
+  const windowTex = (rows, cols) => {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d"); x.fillStyle = "#fffaf0"; x.fillRect(0, 0, 128, 128);
+    for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) { x.fillStyle = "#2e5c8a"; x.fillRect(10 + k * (110 / cols), 12 + r * (108 / rows), 110 / cols - 8, 108 / rows - 10); }
+    return new THREE.CanvasTexture(c);
+  };
+  const winTex = windowTex(4, 4);
+  const PALETTE = { demand: 0xe0724f, harbour: 0x6aa86b, supply: 0x4f8fe0 };
+  const flames = [];
+
+  function sphereTank(g, M, x, z, r = 6) {
+    add(new THREE.SphereGeometry(r, 24, 16), M(0xffffff), x, r + 3, z, g, 0.35);
+    add(new THREE.TorusGeometry(r * 1.002, 0.35, 6, 32), M(0x3f7fd0), x, r + 3, z, g, 0).rotation.x = Math.PI / 2;
+    for (let a = 0; a < 5; a++) add(new THREE.CylinderGeometry(0.5, 0.5, r + 3, 6), M(0x9a968c), x + Math.cos(a) * r * 0.8, (r + 3) / 2, z + Math.sin(a) * r * 0.8, g, 0.12);
+  }
+  function cylTank(g, M, x, z, r = 6.5, h = 10, band = 0xe2513a) {
+    add(new THREE.CylinderGeometry(r, r, h, 26), M(0xffffff), x, h / 2, z, g, 0.35);
+    add(new THREE.CylinderGeometry(r * 0.25, r, 2, 26), M(0xe7e2d6), x, h + 1, z, g, 0.25);
+    add(new THREE.CylinderGeometry(r * 1.003, r * 1.003, 1.2, 26), M(band), x, h * 0.7, z, g, 0);
+  }
+  function hullShape(L, W) {
+    const s = new THREE.Shape();
+    s.moveTo(-L / 2, -W / 2); s.lineTo(L / 2 - L * 0.2, -W / 2);
+    s.quadraticCurveTo(L / 2, -W * 0.38, L / 2 + 1, 0);
+    s.quadraticCurveTo(L / 2, W * 0.38, L / 2 - L * 0.2, W / 2);
+    s.lineTo(-L / 2, W / 2); s.quadraticCurveTo(-L / 2 - 1.4, 0, -L / 2, -W / 2);
+    return s;
+  }
+  // An LPG carrier: red boot-topping, hull, cargo domes, accommodation aft, optional flag.
+  function ship({ L = 30, laden = true, domes = 0xf6f1e2, hull = 0x26324a, flag = null, M = T }) {
+    const W = L * 0.19;
+    const g = new THREE.Group();
+    const body = new THREE.Group();
+    g.add(body);
+    const ext = (h, mat, y, s = 1) => {
+      const geo = new THREE.ExtrudeGeometry(hullShape(L * s, W * s), { depth: h, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelSegments: 2 });
+      geo.rotateX(-Math.PI / 2);
+      return add(geo, mat, 0, y, 0, body, 0.36);
+    };
+    ext(2, M(0xc8382c), 0);
+    ext(3.4, M(hull), 2);
+    add(new THREE.BoxGeometry(L * 0.54, 1.4, W * 0.56), M(0xeae4d4), L * 0.06, 6.3, 0, body, 0.22);
+    for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(W * 0.23, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M(domes), -L * 0.16 + i * L * 0.145, 7, 0, body, 0.25);
+    add(new THREE.BoxGeometry(L * 0.12, 6, W * 0.86), M(0xffffff, { map: winTex }), -L * 0.42, 8.4, 0, body, 0.3);
+    add(new THREE.BoxGeometry(2.2, 4, 2.2), M(0x26324a), -L * 0.47, 13.4, 0, body, 0.25);
+    if (flag) {
+      add(new THREE.CylinderGeometry(0.22, 0.22, 9, 6), M(0xffffff), L * 0.4, 10, 0, body, 0.1);
+      const f = add(new THREE.PlaneGeometry(4.4, 2.4, 8, 1), M(flag, { side: THREE.DoubleSide }), L * 0.4 - 2.2, 13.2, 0, body, 0);
+      g.userData.flag = f;
+      g.userData.flagBase = f.geometry.attributes.position.array.slice();
+    }
+    body.position.y = laden ? -2.6 : -1.1;
+    return g;
+  }
+
+  const LOOKS = {
+    office(g, M, side) {
+      add(new THREE.BoxGeometry(16, 20, 12), M(0xffffff, { map: winTex }), 0, 10, 0, g, 0.35);
+      add(new THREE.BoxGeometry(17, 3, 13), M(PALETTE[side]), 0, 21.5, 0, g, 0.3);
+      add(new THREE.BoxGeometry(12, 12, 10), M(0xffffff, { map: winTex }), -14, 6, 4, g, 0.3);
+      add(new THREE.BoxGeometry(13, 2.4, 11), M(0x3f7fd0), -14, 13.2, 4, g, 0.3);
+    },
+    refinery(g, M) {
+      [[-12, -4, 2.4, 30], [-5, 2, 1.8, 24], [2, -4, 2.8, 34]].forEach(([x, z, r, h]) => add(new THREE.CylinderGeometry(r, r * 1.12, h, 14), M(0xd5dade), x, h / 2, z, g, 0.3));
+      for (let i = 0; i < 6; i++) add(new THREE.CylinderGeometry(1, 1, 5, 12), M(i % 2 ? 0xffffff : 0xe2513a), 14, 2.5 + i * 5, -6, g, 0.25);
+      const flame = new THREE.Group();
+      [[0xff7a1a, 2.6, 6], [0xffc229, 1.6, 4]].forEach(([c, r, h], i) => add(new THREE.ConeGeometry(r, h, 10), M(c, { emissive: c, emissiveIntensity: 0.6 }), 0, h / 2 - i * 0.4, 0, flame, 0.2));
+      flame.position.set(14, 30, -6);
+      g.add(flame);
+      flames.push(flame);
+      cylTank(g, M, 8, 8, 5, 8);
+    },
+    tanks(g, M) { [[-11, 0], [0, -6], [11, 0], [0, 7]].forEach(([x, z]) => sphereTank(g, M, x, z, 5.5)); },
+    pipeline(g, M) {
+      cylTank(g, M, 10, 0, 7, 12, 0x3f7fd0);
+      add(new THREE.CylinderGeometry(1.4, 1.4, 26, 12), M(0x9fb4c2), -8, 3, 0, g, 0.25).rotation.z = Math.PI / 2;
+      for (const x of [-18, -10, -2]) add(new THREE.BoxGeometry(2, 3, 2), M(0x8a6238), x, 1.5, 0, g, 0.15);
+    },
+    crane(g, M) {
+      add(new THREE.BoxGeometry(1.4, 26, 1.4), M(0xf2c230), -6, 13, -4, g, 0.18);
+      add(new THREE.BoxGeometry(1.4, 26, 1.4), M(0xf2c230), -6, 13, 4, g, 0.18);
+      add(new THREE.BoxGeometry(32, 1.6, 1.6), M(0xf2c230), 6, 26, 0, g, 0.18);
+      add(new THREE.BoxGeometry(5, 4, 5), M(0xe2513a), 14, 21, 0, g, 0.2);
+      [[-12, 0x4f8fe0], [-4, 0xe0724f], [4, 0x6aa86b]].forEach(([x, c]) => add(new THREE.BoxGeometry(7, 3.4, 3.4), M(c), x, 1.7, 9, g, 0.2));
+    },
+    berth(g, M) {
+      add(new THREE.BoxGeometry(40, 1.2, 6), M(0xb07a43), 0, 3.4, 8, g, 0.22);
+      for (let x = -18; x <= 18; x += 6) add(new THREE.CylinderGeometry(0.5, 0.5, 6, 8), M(0x7a5230), x, 0.6, 11, g, 0.15);
+      const s = ship({ L: 30, laden: true, M });
+      s.position.set(0, -LAND_TOP + 0.2, 18);
+      g.add(s);
+    },
+    tower(g, M) {
+      for (let i = 0; i < 5; i++) add(new THREE.CylinderGeometry(2.4 - i * 0.12, 2.5 - i * 0.12, 4.4, 16), M(i % 2 ? 0xe2513a : 0xffffff), 0, 2.2 + i * 4.4, 0, g, 0.3);
+      add(new THREE.CylinderGeometry(2, 2, 3, 12), M(0xfff2a0, { emissive: 0xffe066, emissiveIntensity: 0.7 }), 0, 23.5, 0, g, 0.25);
+      add(new THREE.ConeGeometry(2.8, 3, 12), M(0x3a2a1a), 0, 26.5, 0, g, 0.2);
+      add(new THREE.BoxGeometry(10, 6, 8), M(0xffffff, { map: winTex }), 9, 3, 2, g, 0.25);
+    },
+    platform(g, M, side) {
+      for (const [x, z] of [[-8, -6], [8, -6], [-8, 6], [8, 6]]) add(new THREE.CylinderGeometry(1, 1.2, 14, 10), M(0xf2c230), x, 2, z, g, 0.2);
+      add(new THREE.BoxGeometry(22, 2, 18), M(0xd9d3c4), 0, 9, 0, g, 0.25);
+      add(new THREE.BoxGeometry(9, 7, 8), M(PALETTE[side]), -4, 13.5, -2, g, 0.25);
+      add(new THREE.BoxGeometry(1.2, 16, 1.2), M(0xffffff), 6, 18, 4, g, 0.15);
+    },
+    yard(g, M, side, place) {
+      add(new THREE.BoxGeometry(34, 1, 14), M(0xb7aa90), 0, 0.5, 0, g, 0.2);
+      add(new THREE.BoxGeometry(1.4, 22, 1.4), M(0xf2c230), -15, 11, -6, g, 0.18);
+      add(new THREE.BoxGeometry(32, 1.4, 1.4), M(0xf2c230), 0, 22, -6, g, 0.18);
+      if (place.status === "planned") {
+        for (let i = 0; i < 6; i++) add(new THREE.TorusGeometry(4, 0.4, 6, 12, Math.PI), M(0x8a8a8a), -10 + i * 4, 1.2, 0, g, 0).rotation.y = Math.PI / 2;
+      } else {
+        const s = ship({ L: 28, laden: false, hull: 0x2f5a6e, M });
+        s.position.y = 2.6;
+        g.add(s);
+      }
+    },
+    town(g, M, side) {
+      [[-12, 0, 9, 10, PALETTE[side]], [0, -3, 10, 14, 0x4f8fe0], [12, 1, 9, 9, PALETTE[side]]].forEach(([x, z, w, h, roof]) => {
+        add(new THREE.BoxGeometry(w, h, w), M(0xfff1d0, { map: winTex }), x, h / 2, z, g, 0.28);
+        const r = add(new THREE.ConeGeometry(w * 0.78, 5, 4), M(roof), x, h + 2.5, z, g, 0.25);
+        r.rotation.y = Math.PI / 4;
+      });
+    },
+    shed(g, M, side) {
+      add(new THREE.BoxGeometry(28, 9, 16), M(0xfff1d0), 0, 4.5, 0, g, 0.3);
+      const roof = add(new THREE.CylinderGeometry(8.5, 8.5, 28, 16, 1, false, 0, Math.PI), M(PALETTE[side]), 0, 9, 0, g, 0.25);
+      roof.rotation.z = Math.PI / 2;
+      add(new THREE.BoxGeometry(8, 6, 0.6), M(0x8a6238), 0, 3, 8.2, g, 0.15);
+    },
+    boat(g, M) {
+      add(new THREE.BoxGeometry(34, 1, 5), M(0xb07a43), 0, 1.6, 0, g, 0.2);
+      [[-9, 0xfff7e3], [9, 0xe0724f]].forEach(([x, c]) => {
+        add(new THREE.BoxGeometry(10, 2, 4), M(c), x, 0.6, 7, g, 0.2);
+        add(new THREE.ConeGeometry(2.6, 9, 3), M(0xfffaf0), x, 6, 7, g, 0.15);
+      });
+    },
+    ship(g, M) {
+      [[0, -6, 0.1], [0, 8, -0.1]].forEach(([x, z, r]) => {
+        const s = ship({ L: 28, laden: false, hull: 0x7a7266, domes: 0xbdb5a6, M });
+        s.position.set(x, 0, z);
+        s.rotation.y = r;
+        g.add(s);
+      });
+    },
+  };
+  const DEFAULT_LOOK = { demand: "office", harbour: "shed", supply: "platform" };
+  const FLOATS = new Set(["platform", "ship", "boat", "berth"]);
+
+  const clickable = [];
+  const placeGroups = {};
+  const tags = [];
+  const tag = (text, cls, getPos) => {
+    const d = html("div", `tag ${cls}`, text);
+    tagLayer.append(d);
+    tags.push({ d, getPos });
+    return d;
+  };
+
+  for (const place of places) {
+    const look = LOOKS[place.look] ? place.look : DEFAULT_LOOK[place.side];
+    const M = paint(place.status);
+    const g = new THREE.Group();
+    const p = at[place.id];
+    g.position.copy(p);
+    if (place.side === "supply" && !FLOATS.has(look)) {
+      add(new THREE.BoxGeometry(34, 3, 28), T(0xd9d3c4), 0, 0.6, 0, g, 0.25); // a pontoon for buildings on the water
+      g.position.y = 2;
+    }
+    if (place.side === "demand") add(new THREE.BoxGeometry(40, 0.8, 32), T(0xd9d3c4), 0, 0.2, 0, g, 0.12);
+    LOOKS[look](g, M, place.side, place);
+    g.traverse((o) => { o.userData.place = place.id; });
+    scene.add(g);
+    placeGroups[place.id] = g;
+    clickable.push(g);
+    const badge = { locked: " 🔒", copy: " · copy", planned: " · planned", standalone: " · not piped", dormant: " · dormant" }[place.status] || "";
+    const t = tag(place.label + badge, `place ${place.status}`, () => g.position.clone().add(V(0, 34, 0)));
+    t.dataset.id = place.id;
+  }
+  const sideNames = data.sides || {};
+  tag(sideNames.demand || "Coast", "zone", () => V(0, 58, nearZ - 30));
+  if (quay.length) tag(sideNames.harbour || "Quay", "zone", () => V(-spanX / 2 + 10, 12, -12));
+  tag(sideNames.supply || "Water", "zone", () => V(0, 6, L.seaZ * 0.45));
+
+  // ---- Pipes along the data flow, with cargo moving through live ones ----
+  const pipeMeshes = [];
+  const flowDots = [];
+  for (const place of places) {
+    for (const target of place.feeds) {
+      const a = at[place.id];
+      const b = at[target];
+      if (!a || !b) continue;
+      const planned = place.status === "planned" || byId.get(target).status === "planned";
+      const y1 = a.y + 4;
+      const y2 = b.y + 4;
+      const mid = a.clone().lerp(b, 0.5);
+      const curve = new THREE.CatmullRomCurve3([V(a.x + 12, y1, a.z), V(mid.x, Math.max(y1, y2) + 14, mid.z), V(b.x - 12, y2, b.z)]);
+      const mat = new THREE.MeshToonMaterial({ color: planned ? 0xe8dcc4 : 0x9fb4c2, gradientMap: tones, transparent: planned, opacity: planned ? 0.6 : 1 });
+      const tube = add(new THREE.TubeGeometry(curve, 40, 1.1, 8), mat, 0, 0, 0, scene, planned ? 0 : 0.25);
+      tube.userData.pipe = { from: place.id, to: target, base: mat.color.clone() };
+      pipeMeshes.push(tube);
+      if (!planned) {
+        for (let i = 0; i < 3; i++) {
+          const dot = add(new THREE.SphereGeometry(1.3, 10, 8), T(0xffd24a, { emissive: 0xffb000, emissiveIntensity: 0.4 }), 0, 0, 0, scene, 0);
+          flowDots.push({ dot, curve, ph: i / 3 });
+        }
+      }
+    }
+  }
+
+  // ---- Task ships: at anchor in a buoy ring when they need you, sailing while they work, moored otherwise ----
+  // Each carries a card above it, built by the page (D21): what it's doing, or what it needs from you.
+  // The service orders and limits them, live first. Pipeline runs (build step 3) come after the tasks.
+  const shown = tasks.filter((t) => t.status !== "discarded");
+  // A loop within the harbour's width, so a sailing ship is always in view.
+  const reachX = spanX / 2 - 30;
+  const lane = new THREE.CatmullRomCurve3([V(-reachX, 0, farZ), V(-reachX / 3, 0, farZ + 14), V(reachX / 3, 0, farZ - 8),
+    V(reachX, 0, farZ + 4), V(reachX / 3, 0, farZ + 26), V(-reachX / 3, 0, farZ + 20)], true);
+  const movers = [];
+  const bobbers = [];
+  const rings = [];
+  const cards = new Map(); // task id -> { holder, last }
+  // A pipeline run never anchors: it needs nothing from you. It sails while running, then moors.
+  const placement = (task) => (task.kind === "run" ? (task.status === "running" ? "sail" : "moor")
+    : task.needs || task.status === "waiting" ? "anchor" : LIVE.has(task.status) ? "sail" : "moor");
+  let anchored = 0;
+  let moored = 0;
+  let runsMoored = 0;
+  shown.forEach((task, i) => {
+    const run = task.kind === "run";
+    // Run ships are blue-hulled with a blue flag (red when the run failed), so they read apart from AI tasks.
+    const flag = new THREE.Color(run ? (task.status === "failed" ? "#d64545" : "#3d8bfd") : TASK_FLAG[task.status] || "#fff7e3").getHex();
+    const s = run ? ship({ L: 30, laden: task.status !== "failed", hull: 0x1f4f8f, domes: 0xdfe8f5, flag })
+      : ship({ L: 32, laden: task.status !== "failed", domes: flag, flag });
+    s.traverse((o) => { o.userData.task = task.id; });
+    scene.add(s);
+    clickable.push(s);
+    const where = placement(task);
+    if (where === "anchor") {
+      // A row of buoy rings off the quay, from the right: whatever is waiting for the user.
+      const at = V(spanX / 2 - 50 - anchored * 160, 0, L.seaZ * 0.55);
+      anchored += 1;
+      s.position.copy(at);
+      s.rotation.y = 0.5;
+      bobbers.push(s);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(24, 25.6, 72), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(at.x, 1, at.z);
+      scene.add(ring);
+      rings.push(ring);
+    } else if (where === "sail") {
+      movers.push({ model: s, phase: 0.15 + i / Math.max(1, shown.length), dur: 90 });
+    } else if (run) {
+      s.position.set(spanX / 3 - runsMoored * 110, 0, 10); // finished runs moor from the right
+      runsMoored += 1;
+      s.rotation.y = Math.PI;
+      bobbers.push(s);
+    } else {
+      s.position.set(-spanX / 3 + moored * 110, 0, 10); // moored along the quay, from the left
+      moored += 1;
+      s.rotation.y = 0;
+      bobbers.push(s);
+    }
+    const holder = html("div", `h3-shipcard ${where}`);
+    holder.append(handlers.shipCard ? handlers.shipCard(task) : html("div", "tag", task.title));
+    tagLayer.append(holder);
+    tags.push({ d: holder, getPos: () => s.position.clone().add(V(0, 20, 0)) });
+    cards.set(task.id, { holder, last: JSON.stringify(task) });
+  });
+  // What changes the scene (a ship arriving, leaving, or moving between sailing, anchor and mooring)
+  // needs a redraw; anything else only refreshes the cards, in place.
+  const signature = shown.map((t) => `${t.id}:${placement(t)}:${t.status}`).join("|");
+  if (!shown.length) {
+    // An empty harbour still has traffic: two carriers passing, for scale and life.
+    for (const phase of [0, 0.5]) {
+      const passing = ship({ L: 34 });
+      scene.add(passing);
+      movers.push({ model: passing, phase, dur: 120 });
+    }
+  }
+
+  // ---- Wake ----
+  const blobTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.beginPath(); x.arc(32, 32, 26, 0, Math.PI * 2); x.fill(); return new THREE.CanvasTexture(c); })();
+  const blobs = [];
+  for (let i = 0; i < 160; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 0 }));
+    scene.add(sp);
+    blobs.push({ s: sp, life: 0 });
+  }
+  let blobI = 0;
+  const puff = (p) => { const b = blobs[blobI++ % blobs.length]; b.s.position.copy(p); b.s.position.y = 1.2; b.life = 1; };
+
+  // ---- Picking: hover lights a place's pipes, click opens its card or the task ----
+  let hovered = null;
+  let chosen = null;
+  const ray = new THREE.Raycaster();
+  const pointer = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  };
+  const hit = (e) => {
+    ray.setFromCamera(pointer(e), cam);
+    const found = ray.intersectObjects(clickable, true)[0];
+    return found ? found.object.userData : null;
+  };
+  const light = (id) => {
+    for (const tube of pipeMeshes) {
+      const on = id && (tube.userData.pipe.from === id || tube.userData.pipe.to === id);
+      tube.material.color.copy(on ? new THREE.Color(0xffb000) : tube.userData.pipe.base);
+    }
+    for (const t of tags) if (t.d.dataset.id) t.d.classList.toggle("lit", t.d.dataset.id === id);
+  };
+  const select = (info) => {
+    if (info?.task) { handlers.openTask(info.task); return; }
+    if (info?.place) {
+      chosen = info.place;
+      if (handlers.openPlace) {
+        // A place is a door (D21): it opens its own panel over the harbour.
+        card.hidden = true;
+        handlers.openPlace(byId.get(chosen), byId);
+      } else {
+        fillCard(card, byId.get(chosen), byId, handlers);
+        card.hidden = false;
+      }
+    } else {
+      chosen = null;
+      card.hidden = true;
+    }
+    light(chosen);
+  };
+
+  // ---- Camera: orbit and zoom ----
+  // The camera is kept across redraws (live updates redraw when ships move between states).
+  let yaw = savedView.yaw ?? L.yaw;
+  let pitch = savedView.pitch ?? L.pitch;
+  let zoom = savedView.zoom ?? 1; // the user's scroll, relative to a view that fits the whole harbour
+  const target = V(0, 0, nearZ + (farZ - nearZ) * L.focus);
+  // Far enough back to fit the harbour's width and depth in whatever shape the panel is.
+  const fitDist = () => {
+    const half = Math.tan((cam.fov * Math.PI) / 360);
+    const wide = (spanX + L.margin) / 2 / (half * cam.aspect);
+    const deep = (farZ - nearZ + 120) / 2 / half;
+    return Math.max(wide, deep) * L.fit;
+  };
+  let drag = null;
+  canvas.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", (e) => {
+    if (drag) {
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      yaw -= dx * 0.004;
+      pitch = Math.max(0.15, Math.min(1.15, pitch + dy * 0.003));
+      Object.assign(savedView, { yaw, pitch });
+      drag.x = e.clientX;
+      drag.y = e.clientY;
+      return;
+    }
+    const info = hit(e);
+    const id = info?.place || null;
+    canvas.style.cursor = info?.place || info?.task ? "pointer" : "grab";
+    if (id !== hovered) { hovered = id; light(hovered || chosen); }
+  });
+  canvas.addEventListener("pointerup", (e) => { if (drag && !drag.moved) select(hit(e)); drag = null; });
+  canvas.addEventListener("wheel", (e) => { e.preventDefault(); zoom = Math.max(0.35, Math.min(1.5, zoom * (1 + e.deltaY * 0.001))); savedView.zoom = zoom; }, { passive: false });
+
+  const resize = () => {
+    const w = stage.clientWidth || 800;
+    const h = stage.clientHeight || 560;
+    renderer.setSize(w, h, false);
+    cam.aspect = w / h;
+    cam.updateProjectionMatrix();
+  };
+  const observer = new ResizeObserver(resize);
+  observer.observe(stage);
+  resize();
+
+  // ---- Animation ----
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clock = new THREE.Clock();
+  let running = true;
+  function dispose() {
+    running = false;
+    observer.disconnect();
+    renderer.dispose();
+  }
+  function tick() {
+    if (!running) return;
+    if (!stage.isConnected) { dispose(); return; } // the user left the harbour
+    const t = reduce ? 4 : clock.getElapsedTime();
+    const pos = waterGeo.attributes.position.array;
+    for (let i = 0; i < pos.length; i += 3) pos[i + 1] = Math.sin(waterBase[i] * 0.04 + t * 1.1) * 0.7 + Math.cos(waterBase[i + 2] * 0.05 + t * 0.8) * 0.5;
+    waterGeo.attributes.position.needsUpdate = true;
+    waterGeo.computeVertexNormals();
+    for (const s of swirls) { s.m.material.opacity = (Math.sin(t * 0.7 * s.sp + s.ph) + 1) / 2 * 0.85; }
+    for (const m of movers) {
+      const f = reduce ? m.phase : (m.phase + t / m.dur) % 1;
+      const p = lane.getPointAt(f);
+      const ahead = lane.getPointAt((f + 0.002) % 1);
+      m.model.position.set(p.x, Math.sin(t * 1.8 + f * 20) * 0.6, p.z);
+      m.model.rotation.y = Math.atan2(-(ahead.z - p.z), ahead.x - p.x);
+      if (!reduce && Math.random() < 0.5) { const a = m.model.rotation.y; puff(m.model.position.clone().add(V(-17 * Math.cos(a), 0, 17 * Math.sin(a)))); }
+    }
+    for (const s of bobbers) { s.position.y = Math.sin(t * 1.5 + s.position.x) * 0.45; s.rotation.z = Math.sin(t * 1.2 + s.position.z) * 0.02; }
+    for (const d of flowDots) d.dot.position.copy(d.curve.getPointAt(reduce ? d.ph : (d.ph + t * 0.12) % 1));
+    for (const b of blobs) if (b.life > 0) { b.life -= 0.008; b.s.material.opacity = Math.max(0, b.life) * 0.9; b.s.scale.setScalar(2 + (1 - b.life) * 5); }
+    for (const f of flames) f.scale.set(1 + Math.sin(t * 11) * 0.12, 1 + Math.sin(t * 7) * 0.22, 1);
+    scene.traverse((o) => {
+      if (!o.userData.flag) return;
+      const a = o.userData.flag.geometry.attributes.position;
+      const b = o.userData.flagBase;
+      for (let i = 0; i < a.count; i++) a.array[i * 3 + 2] = Math.sin(b[i * 3] * 1.2 + t * 6) * 0.35 * (b[i * 3] + 2.2) / 4.4;
+      a.needsUpdate = true;
+    });
+    for (const ring of rings) { const k = (Math.sin(t * 1.6) + 1) / 2; ring.material.opacity = 0.85 - 0.45 * k; ring.scale.setScalar(1 + 0.04 * k); }
+    clouds.forEach((c, i) => { c.position.x += 0.03 + i * 0.004; if (c.position.x > 900) c.position.x = -900; });
+    const dist = fitDist() * zoom;
+    // Haze starts beyond the harbour however far back the camera sits, so it never washes it out.
+    scene.fog.near = dist * 1.1;
+    scene.fog.far = dist * 2.6;
+    cam.position.set(target.x + dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch), target.z + dist * Math.cos(pitch) * Math.cos(yaw));
+    cam.lookAt(target);
+    renderer.render(scene, cam);
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    const placed = [];
+    for (const tg of tags) {
+      const v = tg.getPos().project(cam);
+      const visible = v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05;
+      tg.d.style.display = visible ? "block" : "none";
+      const x = (v.x + 1) / 2 * w;
+      const y = (1 - v.y) / 2 * h;
+      tg.d.style.left = `${x}px`;
+      if (visible && tg.d.classList.contains("h3-shipcard")) placed.push({ d: tg.d, x, y, w: tg.d.offsetWidth, h: tg.d.offsetHeight });
+      else tg.d.style.top = `${y}px`;
+    }
+    // Ship cards make room for each other: those needing the user are placed first, and a card
+    // that would overlap one already placed moves up until it clears it.
+    placed.sort((a, b) => b.d.classList.contains("anchor") - a.d.classList.contains("anchor") || b.y - a.y);
+    const settled = [];
+    for (const c of placed) {
+      let y = c.y;
+      for (let moved = true; moved;) {
+        moved = false;
+        for (const o of settled) {
+          if (Math.abs(c.x - o.x) < (c.w + o.w) / 2 + 6 && y > o.y - o.h - 6 && y - c.h < o.y + 6) {
+            y = o.y - o.h - 8;
+            moved = true;
+          }
+        }
+      }
+      c.d.style.top = `${y}px`;
+      settled.push({ ...c, y });
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+  // Live updates: refresh the cards in place, or say a redraw is needed (false).
+  function update(next) {
+    const list = next.filter((t) => t.status !== "discarded");
+    if (list.map((t) => `${t.id}:${placement(t)}:${t.status}`).join("|") !== signature) return false;
+    for (const task of list) {
+      const entry = cards.get(task.id);
+      const now = JSON.stringify(task);
+      if (entry && now !== entry.last && handlers.shipCard) {
+        entry.holder.replaceChildren(handlers.shipCard(task));
+        entry.last = now;
+      }
+    }
+    return true;
+  }
+  return { dispose, update };
+}
+
+window.drawHarbour3D = drawHarbour3D;
+window.webglAvailable = webglAvailable;
+})();
+window.__HARBOUR_DATA = {"description": "Northwind Shipping Analytics, drawn as a harbour (invented demo).", "sides": {"demand": "Coast · trade flows", "harbour": "Quay · our workspace", "supply": "Water · the fleet"}, "places": [{"id": "customs", "label": "Customs house", "side": "demand", "status": "active", "look": "office", "represents": "Monthly customs export data: what each country shipped.", "paths": [{"path": "01_sources/customs_exports.csv", "state": "present"}], "feeds": ["pipeline"], "opens": {"file": "01_sources/customs_exports.csv"}, "overview": null, "note": null, "role": "source", "column": 0}, {"id": "pipeline", "label": "Refinery · pipeline", "side": "demand", "status": "active", "look": "refinery", "represents": "The pipeline that turns raw sources into clean tables.", "paths": [{"path": "02_pipeline", "state": "present"}], "feeds": ["outputs"], "opens": {"tool": "pipeline", "page": "Overview"}, "overview": null, "note": null, "role": "recipe", "column": 1}, {"id": "outputs", "label": "Product jetty · outputs", "side": "demand", "status": "active", "look": "tanks", "represents": "Clean monthly tables and the report.", "paths": [{"path": "03_outputs", "state": "present"}], "feeds": ["charts", "forecasts"], "opens": {"folder": "03_outputs"}, "overview": null, "note": null, "role": "generated", "column": 2}, {"id": "charts", "label": "Chart house", "side": "demand", "status": "active", "look": "office", "represents": "Charts for the monthly report.", "paths": [{"path": "04_charts", "state": "present"}], "feeds": [], "opens": {"file": "04_charts/make_charts.py"}, "overview": null, "note": null, "role": "generated", "column": 3}, {"id": "forecasts", "label": "Forecast office", "side": "demand", "status": "active", "look": "town", "represents": "Hand-built forecasts fed by the outputs.", "paths": [{"path": "05_forecasts", "state": "present"}], "feeds": [], "opens": {"file": "05_forecasts/forecast_2027.xlsx"}, "overview": null, "note": null, "role": "notes", "column": 3}, {"id": "portcalls", "label": "Pilot station · port calls", "side": "supply", "status": "active", "look": "tower", "represents": "Ship visits to each port: the fleet side of the business.", "paths": [{"path": "01_sources/port_calls.csv", "state": "present"}], "feeds": ["pipeline"], "opens": {"file": "01_sources/port_calls.csv"}, "overview": null, "note": null, "role": "source", "column": 0}, {"id": "cloud", "label": "Cloud model", "side": "supply", "status": "locked", "look": "platform", "represents": "A shared model owned by another team: read-only.", "paths": [], "feeds": [], "opens": null, "overview": null, "note": null, "role": null, "column": 0}, {"id": "newyard", "label": "Shipyard · fleet model", "side": "supply", "status": "planned", "look": "yard", "represents": "A fleet model we plan to build next.", "paths": [], "feeds": [], "opens": null, "overview": null, "note": null, "role": null, "column": 0}, {"id": "reference", "label": "Marina · reference", "side": "harbour", "status": "active", "look": "boat", "represents": "Glossary and reference notes.", "paths": [{"path": "90_reference", "state": "present"}], "feeds": [], "opens": {"file": "90_reference/glossary.md"}, "overview": null, "note": null, "role": "notes", "column": 0}, {"id": "sandbox", "label": "Drydock · sandbox", "side": "harbour", "status": "active", "look": "yard", "represents": "Scratch space for trying things.", "paths": [{"path": "sandbox", "state": "present"}], "feeds": [], "opens": {"folder": "sandbox"}, "overview": null, "note": null, "role": "sandbox", "column": 0}, {"id": "archive", "label": "Laid-up ships · archive", "side": "harbour", "status": "dormant", "look": "ship", "represents": "Old work, kept but not in use.", "paths": [{"path": "98_archive", "state": "present"}], "feeds": [], "opens": null, "overview": null, "note": null, "role": "dormant", "column": 0}], "roles": {"*/README.md": "notes", "03_outputs/*.md": "deliverable", "04_charts/*.py": "recipe", "05_forecasts/*.xlsx": "hand-built model"}, "warnings": []};
+</script>
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") n.className = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) n.append(kid.nodeType ? kid : document.createTextNode(kid));
+    return n;
+  };
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ================= The live harbour ================= */
+  const DATA = window.__HARBOUR_DATA;
+  const live = $("#live");
+  const box = $("#h3");
+  const START = () => [
+    { id: "t-approve", title: "Refresh the totals", status: "waiting", provider: "claude",
+      needs: { kind: "approval", summary: "Run: python 02_pipeline/build_tables.py", tool: "PowerShell", warnings: [] } },
+    { id: "t-review", title: "Raise 2027 growth to 5%", status: "finished", provider: "claude", needs: { kind: "review", open: 1 } },
+    { id: "t-work", title: "Add a September headline", status: "running", provider: "codex", activity: "Read 03_outputs/monthly_totals.csv" },
+    { id: "run-monthly", kind: "run", title: "Monthly pipeline", status: "running", stage: 0 },
+    { id: "t-done", title: "Fix the glossary", status: "finished", provider: "claude", merged: 1 },
+  ];
+  let ships = START();
+  let view = null;
+  const RUN_STAGES = ["Bronze · Land September files", "Silver · Clean names", "Silver · Match ports", "Gold · Monthly flows", "Ready · Forecast inputs"];
+
+  let door = null;
+  function closeDoor() { door?.remove(); door = null; }
+  function openDoorPanel(title, kind, body) {
+    closeDoor();
+    door = el("section", { class: "door-panel" },
+      el("header", { class: "door-head" }, el("div", { class: "door-title" }, title), el("span", { class: "door-kind" }, kind),
+        el("button", { class: "btn", onclick: closeDoor }, "✕ Back to harbour")),
+      el("div", { class: "door-body" }, body));
+    live.append(door);
+  }
+  addEventListener("keydown", (e) => { if (e.key === "Escape") closeDoor(); });
+  const byShip = (id) => ships.find((s) => s.id === id);
+  function redraw() { if (!view || !view.update(ships)) draw(); }
+
+  const PLACE_DOOR = {
+    tool: ["Opens its tool", "The pipeline's own operations console opens here, over the harbour (D14). Starting a run there sends a blue ship out."],
+    excel: ["Lives in Excel", "A hand-built workbook. It opens in Excel; an AI's change is made by Excel itself on a copy and comes back cell by cell (D10)."],
+    file: ["A file", "Opens the file over the harbour, read-only, with a way below deck to select exact lines for an agent."],
+    folder: ["A folder", "Lists the folder's files, each with its role, and opens any of them."],
+    none: ["Nothing to open", "Planned or locked places show what they stand for and nothing more."],
+  };
+  function doorKind(o) {
+    if (!o) return "none";
+    if (o.tool) return "tool";
+    if (o.folder !== undefined) return "folder";
+    return /\.xls[xmb]?$/i.test(o.file || "") ? "excel" : "file";
+  }
+  function openPlace(place) {
+    const kind = doorKind(place.opens);
+    const [kindText, what] = PLACE_DOOR[kind];
+    const feeds = place.feeds.map((id) => DATA.places.find((p) => p.id === id)?.label).filter(Boolean);
+    openDoorPanel(place.label, kindText, [
+      el("div", { class: "door-about" }, el("p", {}, place.represents || "")),
+      place.paths.length ? el("div", {}, el("div", { class: "door-label" }, "Stands for"), el("div", { style: "font:12px var(--mono)" }, place.paths.map((p) => p.path).join(" · "))) : null,
+      feeds.length ? el("div", {}, el("div", { class: "door-label" }, "Feeds"), el("div", {}, feeds.join(", "))) : null,
+      el("div", {}, el("div", { class: "door-label" }, "This door"), el("p", {}, what)),
+      el("div", { class: "door-actions" }, el("span", { class: "tag" }, "See below deck"), el("span", { class: "door-kind" }, "real files, each with its role")),
+    ]);
+  }
+
+  function answer(ship, allow) {
+    ship.needs = null;
+    ship.status = allow ? "running" : "stopped";
+    ship.activity = allow ? "Running python 02_pipeline/build_tables.py" : "Denied: told why, and stopped";
+    redraw();
+    if (allow) setTimeout(() => { const s = byShip(ship.id); if (s && s.status === "running") { s.status = "finished"; s.merged = 0; s.activity = ""; redraw(); } }, 9000);
+  }
+  function openReview(ship) {
+    openDoorPanel(ship.title, "Changes to review", [
+      el("p", { class: "door-kind" }, "Made by Excel on the task's copy: recalculated and saved, so charts, pivots and macros are kept."),
+      el("div", { class: "tablewrap" }, el("table", { class: "cells" },
+        el("tr", {}, el("th", {}, "Cell"), el("th", {}, "Before"), el("th", {}, "After")),
+        el("tr", {}, el("td", {}, "Forecast!B3"), el("td", { class: "was" }, "=B2*1.04 → 867,360"), el("td", { class: "now" }, "=B2*1.05 → 875,700")),
+        el("tr", {}, el("td", {}, "Forecast!C3"), el("td", { class: "was" }, "=C2*1.04 → 600,080"), el("td", { class: "now" }, "=C2*1.05 → 605,850")))),
+      el("div", { class: "door-label" }, "Results that moved after recalculation"),
+      el("div", { class: "tablewrap" }, el("table", { class: "cells" }, el("tr", {}, el("td", {}, "Forecast!D3 total"), el("td", { class: "was" }, "1,467,440"), el("td", { class: "now" }, "1,481,550")))),
+      el("div", { class: "door-actions" },
+        el("button", { class: "btn go", onclick: () => { ship.needs = null; ship.merged = 1; closeDoor(); redraw(); } }, "Approve and merge"),
+        el("button", { class: "btn", onclick: () => { ship.needs = null; ship.merged = 0; ship.status = "finished"; closeDoor(); redraw(); } }, "Reject")),
+    ]);
+  }
+  function openShip(id) {
+    const s = byShip(id);
+    if (!s) return;
+    if (s.needs?.kind === "review") return openReview(s);
+    if (s.kind === "run") {
+      return openDoorPanel(s.title, "Pipeline run · read from its records", [
+        el("p", {}, "Runs are started and stopped in the pipeline's console; Harbour View only reads what it records."),
+        el("div", {}, RUN_STAGES.map((st, i) => el("div", { class: "ev" }, el("span", { class: `pill ${i < s.stage ? "allow" : i === s.stage ? "ask" : ""}` }, i < s.stage ? "done" : i === s.stage ? "now" : "next"), el("span", {}, st)))),
+      ]);
+    }
+    openDoorPanel(s.title, `Task · ${s.provider === "codex" ? "Codex" : "Claude"}`, [
+      el("p", {}, s.activity || ({ finished: "Finished.", stopped: "Stopped." }[s.status] || "")),
+      el("p", { class: "door-kind" }, "In the app this opens the task page: its brief, footprint, timeline and change cards."),
+    ]);
+  }
+  function shipCard(ship) {
+    if (ship.kind === "run") {
+      const done = ship.stage >= RUN_STAGES.length;
+      const card = el("div", { class: "ship-card compact run" }, el("div", { class: "sc-title" }, ship.title),
+        el("div", { class: "sc-what" }, done ? "Finished · ready for forecasting" : RUN_STAGES[ship.stage]),
+        el("div", { class: "sc-bar" }, el("span", { style: `width:${Math.min(100, (ship.stage / RUN_STAGES.length) * 100)}%` })));
+      card.addEventListener("click", () => openShip(ship.id));
+      return card;
+    }
+    const n = ship.needs;
+    if (n?.kind === "approval") {
+      return el("div", { class: "ship-card needs" }, el("div", { class: "sc-title" }, ship.title), el("div", { class: "sc-what" }, "Wants to run a command"),
+        el("code", { class: "sc-cmd" }, n.summary.replace(/^Run:? /, "")),
+        el("div", { class: "sc-actions" }, el("button", { class: "primary", onclick: () => answer(ship, true) }, "Approve once"), el("button", { onclick: () => answer(ship, false) }, "Deny")));
+    }
+    if (n?.kind === "review") {
+      return el("div", { class: "ship-card needs" }, el("div", { class: "sc-title" }, ship.title), el("div", { class: "sc-what" }, "1 workbook change to review"),
+        el("div", { class: "sc-actions" }, el("button", { class: "primary", onclick: () => openReview(ship) }, "Review")));
+    }
+    const said = { running: "Working", finished: "Finished", stopped: "Stopped", failed: "Failed" }[ship.status] || ship.status;
+    const card = el("div", { class: `ship-card compact ${ship.status}` }, el("div", { class: "sc-title" }, ship.title),
+      el("div", { class: "sc-what" }, ship.status === "finished" && ship.merged ? `${said} · ${ship.merged} merged` : said),
+      ship.status === "running" && ship.activity ? el("div", { class: "sc-note" }, ship.activity) : null);
+    card.addEventListener("click", () => openShip(ship.id));
+    return card;
+  }
+  function draw() {
+    closeDoor();
+    view = window.drawHarbour3D(box, DATA, ships, { openTask: openShip, openPlace, open: () => {}, shipCard });
+  }
+  if (DATA && window.webglAvailable && window.webglAvailable()) {
+    window.__vwHarbourLayout = { fit: 0.82 };
+    draw();
+    if (!reduce) setInterval(() => {
+      const run = byShip("run-monthly");
+      if (!run) return;
+      run.stage = (run.stage + 1) % (RUN_STAGES.length + 2);
+      if (run.stage > RUN_STAGES.length) run.stage = 0;
+      redraw();
+    }, 2600);
+  } else {
+    box.replaceChildren(el("div", { class: "no3d" }, el("span", { class: "zone" }, "Harbour View"),
+      el("p", {}, "The live 3D harbour needs WebGL, which this browser has switched off. These are its places:"),
+      el("div", { class: "tags" }, (DATA?.places || []).map((p) => el("span", { class: "tag" }, p.label)))));
+  }
+  $("#reset-ships").addEventListener("click", () => { ships = START(); if (view) draw(); });
+
+  /* ================= Layers ================= */
+  const LAYERS = [
+    { n: "1", name: "AI Operating System", what: "How any AI agent should work: a minimal contract, skills loaded on demand, reviewed learning.",
+      holds: ["A short shared contract, always loaded", "Ten skills: intake, planning, execution, validation, review, learning, audit, handoff", "Schemas for tasks, evidence, learning candidates and handoff notes", "Thin adapters for Claude and Codex", "Synthetic evaluation scenarios and a structural validator"],
+      never: ["Employer data, business rules or client material", "Machine-specific paths", "Anything a single tool needs"] },
+    { n: "2", name: "Harbour View", what: "The workspace: a local service and browser app that runs agents on a copy, gates every action, and shows the work as a harbour.",
+      holds: ["The gate and the rulebook", "Task copies, change cards, merges and backups", "Context meters, checkpoints and handoff between agents", "The harbour: doors, ship cards, run ships, below deck", "The Excel route for workbook changes"],
+      never: ["Company names, data or paths (decision D6)", "My settings or task history: those stay in local app data"] },
+    { n: "3", name: "The data pipeline", what: "The work itself, and Harbour View's home repository. It describes itself to the harbour in a small folder of its own.",
+      holds: ["Sourcing, bronze, silver, gold and the forecast-ready outputs", "Its operations console and run records", "harbour.json: its places, what feeds what, each file's role", "instruments.json: its console and where runs are recorded"],
+      never: ["Any harbour code. It only describes itself; the harbour does the drawing."] },
+  ];
+  const ll = $("#layer-list");
+  LAYERS.forEach((L, i) => {
+    const more = el("div", { class: "more", id: `layer-more-${i}` },
+      el("div", {}, el("h5", {}, "Holds"), el("ul", {}, L.holds.map((h) => el("li", {}, h)))),
+      el("div", {}, el("h5", {}, "Never holds"), el("ul", {}, L.never.map((h) => el("li", {}, h)))));
+    more.hidden = i !== 1;
+    const chev = el("span", { class: "chev" }, i === 1 ? "−" : "+");
+    const head = el("button", { class: "head", "aria-expanded": String(i === 1), "aria-controls": `layer-more-${i}` }, el("h3", {}, L.name), el("span", { class: "what" }, L.what), chev);
+    head.addEventListener("click", () => { more.hidden = !more.hidden; head.setAttribute("aria-expanded", String(!more.hidden)); chev.textContent = more.hidden ? "+" : "−"; });
+    ll.append(el("div", { class: "layer" }, el("div", { class: "depth", "aria-hidden": "true" }, L.n), el("div", {}, head, more)));
+  });
+
+  /* ================= Pipeline: bronze, silver, gold ================= */
+  const T = (head, rows, opts = {}) => el("div", { class: "tablewrap" }, el("table", { class: "data" },
+    el("tr", {}, head.map((h) => el("th", {}, h))),
+    rows.map((r) => el("tr", {}, r.map((c) => {
+      const [v, cls] = Array.isArray(c) ? c : [c, ""];
+      return el("td", { class: cls }, v);
+    })))));
+  const MEDAL = [
+    { id: "src", nm: "Sources", sub: "Acquire", title: "Sourcing the data",
+      text: "Official customs statistics are published by each country in its own format and schedule. They are fetched country by country, some through saved browser sessions, each as its own recorded run, so one failing source never blocks the others.",
+      points: ["Each country's release checked on its own schedule", "Downloads kept exactly as published, with when and where they came from", "Port calls and other sources fetched alongside"],
+      check: "A source that fails is visible as its own failed run, with its error, while the rest carry on.",
+      cap: "As downloaded · three releases", table: () => T(["File", "Country", "Released", "Rows"], [["exports_2026-09.xlsx", "Norland", "2026-10-14", "4,812"], ["SR_trade_sep.csv", "Southreach", "2026-10-17", "2,106"], ["estmark-202609.zip", "Estmark", "2026-10-20", "9,340"]]),
+      foot: "Three countries, three formats, three timetables." },
+    { id: "bronze", nm: "Bronze", sub: "Land raw", title: "Bronze: landed, untouched",
+      text: "Every release is landed as it arrived: same columns, same spellings, same units. Nothing is fixed here and nothing is thrown away, so any later number can be traced back to exactly what the country published.",
+      points: ["Raw rows, unchanged", "Lineage on every row: source file and release", "Changes in a country's layout detected, not silently absorbed"],
+      check: "Schema check: a release whose columns moved is flagged before it goes further.",
+      cap: "bronze.customs_raw · as published", table: () => T(["Reporter", "Partner", "HS code", "Port of loading", "Qty", "Unit", "Period"], [
+        ["NORLAND", "estmark", "271112", ["Port of Vell.", "bad"], "49 100 000", ["KG", "bad"], "2026M09"],
+        ["Norland", "Southreach", "271113", ["VELLHAVEN", "bad"], "15300000", ["kg", "bad"], "2026-09"],
+        ["Estmark", "Norland", "271112", "Saltmere", "6 450", ["T", "bad"], "09/2026"]]),
+      foot: "Mixed casing, units in kilograms and tonnes, three spellings of one port, three date formats." },
+    { id: "silver", nm: "Silver", sub: "Clean", title: "Silver: cleaned and conformed",
+      text: "The same rows, made consistent. Country and port names are standardised against reference lists, product codes mapped to products, quantities converted to tonnes, periods put into one format, and duplicates and later revisions handled.",
+      points: ["Names and ports matched to one reference", "HS codes mapped to products (propane, butane)", "Everything in tonnes; one month format", "Duplicates removed, revisions applied"],
+      check: "Match check: any port or country that doesn't match the reference is listed for review, not guessed.",
+      cap: "silver.trade_flows · highlighted cells were cleaned", table: () => T(["Month", "Exporter", "Importer", "Product", "Port", "Tonnes"], [
+        [["2026-09", "fix"], "Norland", ["Estmark", "fix"], ["Propane", "fix"], ["Vellhaven", "fix"], ["49,100", "fix num"]],
+        [["2026-09", "fix"], "Norland", "Southreach", ["Butane", "fix"], ["Vellhaven", "fix"], ["15,300", "fix num"]],
+        [["2026-09", "fix"], "Estmark", "Norland", ["Propane", "fix"], "Saltmere", ["6,450", "num"]]]),
+      foot: "One spelling, one unit, one calendar, so rows from different countries can finally be added up." },
+    { id: "gold", nm: "Gold", sub: "Organise", title: "Gold: organised for use",
+      text: "Silver is organised into the tables people actually ask questions of: monthly flows by country, product and route, with the comparisons analysts need already worked out. This is the canonical data lake every output is built from.",
+      points: ["Monthly flows by exporter, product and route", "Month-on-month and year-on-year changes", "One canonical set of tables behind every output"],
+      check: "Reconciliation: totals in gold are checked against the source releases before anything is published.",
+      cap: "gold.monthly_flows", table: () => T(["Month", "Exporter", "Product", "Tonnes", "vs Aug", "vs Sep 2025"], [
+        ["2026-09", "Norland", "Propane", ["49,100", "num"], ["+3.2%", "num"], ["+6.8%", "num"]],
+        ["2026-09", "Norland", "Butane", ["15,300", "num"], ["−1.1%", "num"], ["+2.4%", "num"]],
+        ["2026-09", "Estmark", "Propane", ["6,450", "num"], ["+0.4%", "num"], ["−3.0%", "num"]]]),
+      foot: "Answer-shaped: no cleaning left to do, nothing to join." },
+    { id: "use", nm: "Ready", sub: "Forecast", title: "Ready for forecasting",
+      text: "Gold feeds the outputs: the workbooks a team publishes from, the charts in the monthly report, and the base series for forecasting. Before anything ships, workbook cells are reconciled against gold, a wiring gate checks the formulas point where they should, and the finished workbooks are validated.",
+      points: ["Forecast base series by product", "Published workbooks and report charts", "Query access for ad-hoc questions"],
+      check: "Wiring gate: a workbook formula that points at the wrong range stops the release.",
+      cap: "forecast input · 2027 model (Forecast sheet)", table: () => T(["Year", "Propane", "Butane", "Total", "Basis"], [
+        ["2026", ["834,000", "num"], ["577,000", "num"], ["1,411,000", "num"], "gold, actuals"],
+        ["2027", ["=B2*1.05", "fix"], ["=C2*1.05", "fix"], ["1,481,550", "num"], "growth assumption"]]),
+      foot: "The forecast starts from clean actuals; the assumption is the only thing anyone types." },
+  ];
+  const medal = $("#medal");
+  const detail = $("#layer-detail");
+  function showLayer(i) {
+    [...medal.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+    const m = MEDAL[i];
+    detail.replaceChildren(
+      el("div", { class: "what" }, el("span", { class: "label" }, `${i + 1} of ${MEDAL.length} · ${m.sub}`), el("h3", {}, m.title), el("p", {}, m.text),
+        el("ul", {}, m.points.map((p) => el("li", {}, p))), el("div", { class: "check" }, el("b", {}, "Quality check"), m.check)),
+      el("div", { class: "sample" }, el("div", { class: "cap" }, el("span", { class: `coin ${m.id}`, style: "width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);display:inline-block" }), m.cap), m.table(), el("div", { class: "foot" }, m.foot)));
+  }
+  MEDAL.forEach((m, i) => medal.append(el("button", { class: m.id, "aria-pressed": "false", onclick: () => showLayer(i) },
+    el("span", { class: `coin ${m.id}` }), el("span", { class: "nm" }, m.nm), el("span", { class: "sub" }, m.sub))));
+  showLayer(1);
+
+  /* ================= Walkthrough ================= */
+  const ev = (pill, text) => el("div", { class: "ev" }, el("span", { class: `pill ${pill}` }, pill), el("span", {}, text));
+  const STEPS = [
+    { t: "Ask", s: "In my own words", d: ["D12"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "Ask the agent"),
+        el("textarea", { rows: "3", id: "ask-demo", "aria-label": "Example request" }, "Raise the 2027 growth assumption in the forecast model from 4% to 5%."),
+        el("div", { class: "lbl" }, "With: forecast_2027.xlsx › Forecast!B3:C3 · from my Excel selection"))],
+      why: "I keep working the way I already do, delegating in words. Pointing at cells in Excel, or at lines in a file, gives the agent exact context so I never describe it." },
+    { t: "Brief", s: "Read-only, before any work", d: ["D19", "D11"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "The agent's brief · editable"),
+        el("div", {}, el("b", {}, "Understanding: "), "Change the 2027 growth factor for propane and butane from 1.04 to 1.05."),
+        el("div", {}, el("b", {}, "Assumptions: "), "The 2026 base stays as it is."),
+        el("div", {}, el("b", {}, "Question: "), "Should the Assumptions sheet hold the rate instead of a hard-coded 1.05?"),
+        el("div", { class: "fp" }, el("span", { class: "fpf plan" }, "read 05_forecasts/forecast_2027.xlsx"), el("span", { class: "fpf plan" }, "change Forecast!B3:C3")),
+        el("div", {}, el("button", { class: "btn go", onclick: (e) => { e.target.textContent = "Accepted · work starts"; e.target.disabled = true; } }, "Accept brief")))],
+      why: "The first turn may only read, so I can correct a misunderstanding before it costs anything. The gate enforces read-only, even for actions I have allowed in general." },
+    { t: "Live work", s: "Every action through the gate", d: ["D11", "D18", "D13"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "Activity, as decided by the gate"),
+        ev("allow", "Read workbook forecast_2027.xlsx › Forecast!A1:D3"), ev("allow", "Search the copy for \"1.04\""),
+        ev("deny", "Read C:/Users/…/Desktop/notes.txt: outside the folders this task may read"),
+        ev("ask", "Run: python check_totals.py (script shown before approval)"),
+        ev("allow", "Change 2 cells in forecast_2027.xlsx through Excel (task copy)"))],
+      why: "The agent works freely in its own copy and can't roam the computer. Commands wait for me because a command can reach any file. When blocked in testing, the agent offered to read the file through PowerShell instead, which is exactly why commands need approval." },
+    { t: "Footprint", s: "Plan against what it did", d: ["D19", "D21"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "Below deck · task highlighted"),
+        el("div", { class: "fp" }, el("span", { class: "fpf read" }, "forecast_2027.xlsx · read"), el("span", { class: "fpf change" }, "forecast_2027.xlsx · changed"),
+          el("span", { class: "fpf plan" }, "Assumptions sheet · planned"), el("span", { class: "fpf unplanned" }, "glossary.md · changed, not in its plan")),
+        el("div", { class: "lbl" }, "Dashed planned · green read · amber changed · red outside the plan"))],
+      why: "I can see at a glance whether the agent kept to what it said, using what the gate observed rather than the agent's own account." },
+    { t: "Change card", s: "Excel did the edit", d: ["D10", "D21", "D4"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "Workbook change · made by Excel on the task's copy"),
+        el("div", { class: "tablewrap" }, el("table", { class: "cells" },
+          el("tr", {}, el("th", {}, "Cell"), el("th", {}, "Before"), el("th", {}, "After")),
+          el("tr", {}, el("td", {}, "Forecast!B3"), el("td", { class: "was" }, "=B2*1.04 → 867,360"), el("td", { class: "now" }, "=B2*1.05 → 875,700")),
+          el("tr", {}, el("td", {}, "Forecast!C3"), el("td", { class: "was" }, "=C2*1.04 → 600,080"), el("td", { class: "now" }, "=C2*1.05 → 605,850")))),
+        el("div", { class: "lbl" }, "Results that moved after recalculation"),
+        el("div", { class: "tablewrap" }, el("table", { class: "cells" }, el("tr", {}, el("td", {}, "Forecast!D3 · total"), el("td", { class: "was" }, "1,467,440"), el("td", { class: "now" }, "1,481,550")))))],
+      why: "Workbooks are never saved by a Python library, which can silently drop charts, pivots and links. A hidden Excel with macros off makes the change, recalculates and saves, and the card shows the knock-on effects I would want to check." },
+    { t: "Approve", s: "Merge, with backups", d: ["D15", "D4"],
+      view: () => [el("div", { class: "mock" }, el("div", { class: "lbl" }, "On approval"),
+        el("ul", {}, el("li", {}, "Text files merge three ways, so my own unsaved edits are kept."), el("li", {}, "Anything replaced is backed up first."),
+          el("li", {}, "If I changed the same lines, or the workbook, since the task began: nothing is touched, and the card says so."),
+          el("li", {}, "A workbook open in my Excel is never replaced; I'm asked to close it first.")))],
+      why: "I approve the agent's version without ever losing my own work. Nothing is committed for me unless I ask." },
+    { t: "Checkpoint", s: "Never lose a long task", d: ["D16"],
+      view: () => {
+        const fill = el("div", { class: "fill" });
+        const out = el("div", {});
+        const range = el("input", { type: "range", min: "0", max: "100", value: "45", id: "ctx", "aria-label": "Context window used" });
+        const set = () => {
+          const v = Number(range.value);
+          fill.style.width = `${v}%`;
+          out.textContent = v >= 80 ? `${v}% · conversation ended; a fresh one continues from the handoff note on the task's branch`
+            : v >= 60 ? `${v}% · checkpoint commit saved to the task's own branch` : `${v}% · working`;
+        };
+        range.addEventListener("input", set);
+        const v = el("div", { class: "mock" }, el("div", { class: "lbl" }, "Context window · drag to fill"),
+          el("div", { class: "meter" }, el("div", { class: "track" }, fill, el("span", { class: "tick", style: "left:60%" }), el("span", { class: "tick h", style: "left:80%" })), range, out),
+          el("div", { class: "lbl" }, "At the plan's usage limit the task pauses, saves, and can continue with Codex"));
+        set();
+        return [v];
+      },
+      why: "Long tasks stay resumable by any agent, even a different AI, without me managing conversations. This began as a lesson in the operating system (proposal 0001) and became D16." },
+  ];
+  const stepsOl = $("#steps");
+  const stageBox = $("#stage");
+  function showStep(i) {
+    [...stepsOl.querySelectorAll("button")].forEach((b, j) => { b.classList.toggle("on", i === j); b.setAttribute("aria-current", i === j ? "step" : "false"); });
+    const S = STEPS[i];
+    stageBox.replaceChildren(
+      el("span", { class: "label" }, `Step ${i + 1} of ${STEPS.length}`), el("h3", {}, S.t), ...S.view(),
+      el("div", { class: "why" }, el("p", {}, S.why)),
+      el("div", { class: "chips" }, S.d.map((d) => el("a", { class: "dchip", href: `#${d.toLowerCase()}`, onclick: (e) => { e.preventDefault(); openDecision(d); } }, d))),
+      el("div", { style: "display:flex;gap:8px" },
+        el("button", { class: "btn", onclick: () => showStep((i + STEPS.length - 1) % STEPS.length) }, "← Back"),
+        el("button", { class: "btn go", onclick: () => showStep((i + 1) % STEPS.length) }, i === STEPS.length - 1 ? "Start again" : "Next step →")));
+  }
+  STEPS.forEach((S, i) => stepsOl.append(el("li", {}, el("button", { onclick: () => showStep(i) }, el("span", { class: "n" }, String(i + 1)), el("span", { class: "t" }, S.t), el("span", { class: "s" }, S.s)))));
+  showStep(0);
+
+  /* ================= Gate ================= */
+  const PLACES_R = [["copy", "Task copy"], ["linked", "Linked"], ["ignored-home", "Ignored real files"], ["home", "Real files"], ["outside", "Elsewhere"]];
+  const ACTIONS = [
+    ["read_file", "Read a file", true, ["Read", "workspace_read_file"]],
+    ["list_files", "List file names", true, ["Glob", "workspace_list_files"]],
+    ["search_contents", "Search inside files", true, ["Grep", "workspace_search"]],
+    ["read_workbook", "Read a workbook's cells", true, ["workbook_cells", "workbook_cells"]],
+    ["edit_file", "Create or change a file", true, ["Edit · Write · workbook_edit", "file change · workbook_edit"]],
+    ["run_command", "Run a command", false, ["Bash · PowerShell", "workspace_command"]],
+    ["web_search", "Search the web", false, ["WebSearch", "built-in search (only if search and visits are both Allow)"]],
+    ["visit_page", "Visit a web page", false, ["WebFetch", "workspace_visit_page"]],
+    ["unknown_tool", "A tool it doesn't recognise", false, ["any new tool", "any other tool"]],
+    ["connector", "Helper agents or connectors", false, ["Agent · MCP servers", "native escalations"]],
+  ];
+  const row = (c, l, i, h, o) => ({ copy: c, linked: l, "ignored-home": i, home: h, outside: o });
+  const RULES = {
+    read_file: row("allow", "allow", "allow", "deny", "deny"), list_files: row("allow", "allow", "allow", "allow", "deny"),
+    search_contents: row("allow", "allow", "deny", "deny", "deny"), read_workbook: row("allow", "allow", "allow", "deny", "deny"),
+    edit_file: row("allow", "deny", "deny", "deny", "deny"), run_command: "ask", web_search: "allow", visit_page: "ask", unknown_tool: "ask", connector: "deny",
+  };
+  const REASON = {
+    "read_file:allow": "Inside the folders this task may read. It runs and is logged.",
+    "read_file:deny": "Outside the folders this task may read. The agent is told why, so it doesn't try another route.",
+    "list_files:allow": "Listing names only, so git-ignored workbooks can be found without opening them.",
+    "list_files:deny": "Anywhere else on the computer is off limits.",
+    "search_contents:allow": "Searching the copy or a linked resource is allowed.",
+    "search_contents:deny": "Searching inside real files is off. Files can still be read one at a time where reading is allowed.",
+    "read_workbook:allow": "Read from an in-memory copy, so the file is never held open and Excel can still save it.",
+    "read_workbook:deny": "That workbook is outside the folders this task may read.",
+    "edit_file:allow": "The copy is the task's own sandbox. My approval comes later, on the change cards.",
+    "edit_file:deny": "My real files change only through change cards I approve. Locked: no setting can loosen it.",
+    "run_command:ask": "A command can reach any file and the internet, so each one waits for me, shown in full, with the script's contents if it runs one.",
+    "web_search:allow": "Allowed and logged with its search terms.",
+    "visit_page:ask": "A web address can carry text out of the computer, so I see every address before it's fetched.",
+    "unknown_tool:ask": "A tool added later can't run unseen.",
+    "connector:deny": "Helper agents and connectors act outside the activity view, so they're off.",
+  };
+  const sel = { agent: 0, action: "edit_file", place: "home" };
+  const agentSeg = $("#agent");
+  ["Claude", "Codex"].forEach((name, i) => agentSeg.append(el("button", { "aria-pressed": String(i === 0), onclick: () => { sel.agent = i; renderGate(); } }, name)));
+  const actionSel = $("#action");
+  for (const [id, label] of ACTIONS) actionSel.append(el("option", { value: id }, label));
+  actionSel.addEventListener("change", () => { sel.action = actionSel.value; renderGate(); });
+  const placeSeg = $("#place");
+  for (const [id, label] of PLACES_R) placeSeg.append(el("button", { "aria-pressed": "false", "data-p": id, onclick: () => { sel.place = id; renderGate(); } }, label));
+  const rulesT = $("#rules");
+  rulesT.append(el("tr", {}, el("th", { class: "a" }, ""), PLACES_R.map(([, l]) => el("th", {}, l))));
+  for (const [id, label, byPlace] of ACTIONS) {
+    const tr = el("tr", {}, el("th", { class: "a", scope: "row" }, label));
+    if (byPlace) for (const [p] of PLACES_R) {
+      const v = RULES[id][p];
+      tr.append(el("td", { class: v, "data-a": id, "data-p": p, tabindex: "0", onclick: () => { sel.action = id; sel.place = p; renderGate(); } }, v));
+    } else {
+      const v = RULES[id];
+      tr.append(el("td", { class: v, colspan: "5", "data-a": id, "data-p": "any", tabindex: "0", onclick: () => { sel.action = id; renderGate(); } }, `${v} · everywhere`));
+    }
+    rulesT.append(tr);
+  }
+  rulesT.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("td")) { e.preventDefault(); e.target.click(); } });
+  function renderGate() {
+    const a = ACTIONS.find((x) => x[0] === sel.action);
+    const byPlace = a[2];
+    actionSel.value = sel.action;
+    [...agentSeg.children].forEach((b, i) => b.setAttribute("aria-pressed", String(i === sel.agent)));
+    [...placeSeg.children].forEach((b) => { b.disabled = !byPlace; b.setAttribute("aria-pressed", String(byPlace && b.dataset.p === sel.place)); });
+    const v = byPlace ? RULES[sel.action][sel.place] : RULES[sel.action];
+    for (const td of rulesT.querySelectorAll("td")) td.classList.toggle("sel", td.dataset.a === sel.action && (!byPlace || td.dataset.p === sel.place));
+    $("#verdict").replaceChildren(
+      el("div", { class: "tool" }, `${["Claude", "Codex"][sel.agent]} asks for: ${a[3][sel.agent]}${byPlace ? ` · in ${PLACES_R.find((p) => p[0] === sel.place)[1].toLowerCase()}` : ""}`),
+      el("div", { class: `big ${v}` }, { allow: "Allowed", ask: "Asks me", deny: "Denied" }[v]),
+      el("p", {}, REASON[`${sel.action}:${v}`] || ""),
+      el("div", { class: "lock" }, sel.action === "edit_file" ? "🔒 This rule is locked: it can't be changed on the Rules page." : "I can change this rule on the Rules page, and it applies to every agent at once. Rules are locked while a task runs."),
+      el("div", { class: "lock" }, "Anything unexpected is refused: the gate fails closed if the workspace is down or a reply times out."));
+  }
+  renderGate();
+
+  /* ================= OS loop ================= */
+  const SKILLS = [
+    ["Task intake", "Turn a new request into a scoped task record with ownership, risk and acceptance anchors before material work begins.", "Every material request."],
+    ["Context intake", "Gather the smallest grounded context for a new or resumed task, without treating old material as automatically current.", "Starting or resuming work."],
+    ["Planning", "Define intent, boundaries, dependencies and acceptance evidence before material work begins.", "Before anything that changes state."],
+    ["Execution", "Carry out an approved task in small, traceable changes while preserving unrelated user state and authorisation boundaries.", "Doing the work."],
+    ["Validation", "Produce observable, risk-proportionate evidence before claiming the work is complete.", "Before saying \"done\"."],
+    ["Adversarial review", "Review material changes against intent, failure modes and evidence, with depth set by risk rather than ceremony.", "Changes with a wide blast radius."],
+    ["Task review", "Close a task by reconciling outputs, evidence, unresolved risks and reusable lessons against the original intent.", "Ending a task."],
+    ["Learning capture", "Turn corrections and repeated patterns into scoped, evidence-backed candidates for human review.", "After a correction, or a method used twice."],
+  ];
+  const CROSS = [
+    ["Context handoff", "Checkpoint work to a task branch with a handoff note when context or usage may run out, and resume any task from its latest checkpoint.", "Long work, any agent. Added through proposal 0001."],
+    ["Weekly audit", "Review task state, repository hygiene, validation debt and learning queues, without deleting or changing external state.", "Once a week."],
+  ];
+  const loop = $("#loop");
+  const skillBox = $("#skill");
+  const nodes = [];
+  function showSkill(s, btn, cross) {
+    nodes.forEach((n) => n.setAttribute("aria-pressed", String(n === btn)));
+    skillBox.replaceChildren(el("span", { class: "label" }, cross ? "Cross-cutting skill" : "Lifecycle skill"), el("h3", {}, s[0]), el("p", {}, s[1]), el("p", { class: "when" }, `When: ${s[2]}`));
+  }
+  SKILLS.forEach((s, i) => {
+    const a = (i / SKILLS.length) * Math.PI * 2 - Math.PI / 2;
+    const b = el("button", { class: "node", "aria-pressed": "false", style: `left:${50 + 38 * Math.cos(a)}%;top:${50 + 38 * Math.sin(a)}%`, onclick: () => showSkill(s, b, false) }, s[0]);
+    nodes.push(b); loop.append(b);
+  });
+  CROSS.forEach((s, i) => {
+    const b = el("button", { class: "node cross", "aria-pressed": "false", style: `left:50%;top:${i === 0 ? 69 : 31}%`, onclick: () => showSkill(s, b, true) }, s[0]);
+    nodes.push(b); loop.append(b);
+  });
+  showSkill(SKILLS[0], nodes[0], false);
+
+  /* ================= Decisions ================= */
+  const D = [
+    ["D1", "The workspace lives in its own repository", "Foundations", "The workspace is a separate repository that reads the AI Operating System rather than absorbing it.", "Keeps the method layer short and readable, and lets the app change quickly.", "Keeping the two in step costs more than it saves."],
+    ["D2", "AI writes the code; I steer", "Foundations", "I direct and review through the workspace itself rather than editing code. Technology is chosen for interface quality and for how well agents can maintain it.", "My time goes into the product and its judgement calls, and the tool is tested by the way it is built.", "I want to change the code directly."],
+    ["D3", "Prove one loop first, on text", "Foundations", "The first version proved one loop end to end: point at a folder, select a passage, instruct an agent, watch it work, review, approve, find it again.", "The fastest route to a real loop. Spreadsheets were designed for from the start but built after the loop was proven.", "The text loop can't show whether the model works for analytical work."],
+    ["D4", "The agent works on a copy", "Safety", "Each task runs in an isolated git worktree. Its changes come back as change cards, and only approved ones reach my files.", "I review a whole change at once with nothing half-applied, instead of being interrupted per edit.", "Folders that aren't git repositories become the main use."],
+    ["D5", "A real agent from day one", "Agents", "The prototype drove a real agent instead of a simulated event stream.", "The interface was designed against real behaviour, including the surprising parts.", ""],
+    ["D6", "No company names in the code", "Foundations", "The home repository and linked resources are configured locally. Shared files name no employer, client, person or machine path.", "The tool stays portable and shareable; a company's specifics live with that company's code.", ""],
+    ["D7", "Python service, no-build frontend", "Foundations", "A FastAPI service and a static ES-module frontend with pinned, vendored libraries and no build step.", "The machine had Python but no Node.js, and the service only needs pip installs.", "The interface outgrows plain modules."],
+    ["D8", "Runs on my existing Claude plan", "Agents", "Claude Code runs headless with streamed JSON, and hooks post every action to the local service before it happens.", "No API bill on top of the plan, and a hook can allow, deny or ask for each action.", "The workspace is shared with others; then it moves to the API route."],
+    ["D9", "Git-ignored files are visible, read-only", "Excel & data", "Files outside git are shown and marked, and agents can read them but not change them in place.", "In the repository this was built for, most of the files, including the bulk of the workbooks, are deliberately outside git. Without this an agent couldn't see the main work.", "Listing ignored folders slows the map."],
+    ["D10", "Workbooks change only through Excel", "Excel & data", "Workbooks are read from an in-memory copy and never saved by a Python library. Changes are made by Excel itself on a copy.", "Saving with openpyxl can silently drop charts, pivot tables and external links.", ""],
+    ["D11", "Free in its copy, confined everywhere else", "Safety", "The agent reads and edits its copy freely, can't look elsewhere, needs approval for every command and web page visit, and the gate fails closed.", "Path rules confine file tools, approvals confine commands, and the merge confines results. In testing, a blocked agent offered to use PowerShell instead, which confirmed why commands need approval.", "I want linked folders writable or approvals relaxed. Any relaxation is a new decision, never a default."],
+    ["D12", "Delegate in words, steer by pointing", "Interaction", "I give goals in my own words; the workspace adds steering points (brief, footprint, live work, drafts, review) and shows work on a map, not in a transcript. The harbour is a skin with no authority of its own.", "Most of the value is in seeing and steering, without reading transcripts.", "The steering points add friction to everyday tasks."],
+    ["D13", "Two friction reducers", "Interaction", "\"Approve for this task\" for an exact command or address, tied to a fingerprint of any script it runs so an edited script is asked about again; and the workspace's own read-only workbook tools, so reading a workbook isn't a command. Both are reviewed in the weekly audit.", "In a real task, commands were the only friction, mostly reading workbooks and re-running checks.", "The audit shows approvals are still the main friction."],
+    ["D14", "The pipeline's own console opens inside", "Interaction", "A home repository declares its tools; the workspace starts them, or reuses a running copy, and shows them inside.", "A mature console already existed. Rebuilding it would be wasteful and risky, and declaring it keeps the workspace portable.", ""],
+    ["D15", "How an approved change reaches my files", "Safety", "Three-way merge keeps my own edits, everything replaced is backed up, and conflicts leave my file untouched.", "I approve the agent's version without losing my own uncommitted work.", "Conflicts become common enough to need a resolution view."],
+    ["D16", "Context awareness and handoff across AIs", "Agents", "Meters read from the agent's stream. Checkpoint commits go to the task's own branch at 60%; at 80% the conversation ends and a fresh one continues from a handoff note; at a usage limit the task pauses and can continue with Codex.", "Long tasks stay resumable by any agent without me managing conversations.", "The meter proves unreliable, or fresh conversations lose too much."],
+    ["D17", "A pool of reusable copies, set aside", "Foundations", "An open-source tool that keeps a pool of reusable task copies was evaluated and not adopted; its idea of stopping leftover processes before a copy is discarded was.", "A task copy must start from what I see now, uncommitted edits included, and a reused copy would carry one task's leftovers into the next. With nothing heavy to install, a fresh copy is cheap.", "Copies start taking minutes to prepare."],
+    ["D18", "One rulebook for every agent", "Safety", "Actions × places, each allow, ask or deny, with D11 as the defaults. Every agent's tools are translated into the same actions; edits to real files are locked; rules can't change while tasks run.", "I change a rule once and it holds for every AI, now and added later.", "An agent's tools can't be translated into the rulebook's actions."],
+    ["D19", "Every task starts with a read-only brief", "Interaction", "The first turn may only read and must produce an editable brief with a planned footprint. Work starts when I accept it, and the plan is later compared with what was actually touched.", "I steer before work costs anything, and can see whether the agent kept its word.", "The brief costs more than it saves on everyday tasks."],
+    ["D20", "The harbour in 3D", "Interaction", "The harbour is drawn with three.js, vendored with a verified checksum, with the flat drawing as a fallback.", "It matches the original concept and makes daily use pleasant.", "3D is too heavy on the machine."],
+    ["D21", "Harbour, doors, ship cards, below deck", "Interaction", "Agreed by clicking through a prototype. The harbour shows what needs me; places are doors to the right tool (console, Excel, dashboard, folder); below deck shows real files and roles. Built in seven steps.", "I steer visually and work in Excel and dashboards, so each change goes through the tool that owns the file.", "Cards get crowded, or a door kind is needed that none of these covers."],
+  ];
+  const THEMES = ["All", "Safety", "Interaction", "Agents", "Excel & data", "Foundations"];
+  let theme = "All";
+  const dlist = $("#dlist");
+  const dq = $("#dq");
+  const tbar = $("#dthemes");
+  THEMES.forEach((t) => tbar.append(el("button", { "aria-pressed": String(t === "All"), onclick: () => { theme = t; [...tbar.children].forEach((b) => b.setAttribute("aria-pressed", String(b.textContent === t))); filter(); } }, t)));
+  const items = D.map(([id, title, th, dec, why, reopen]) => {
+    const d = el("details", { class: "dec", id: id.toLowerCase() },
+      el("summary", {}, el("span", { class: "id" }, id), el("span", { class: "tt" }, title), el("span", { class: "th" }, th)),
+      el("div", { class: "body" },
+        el("div", {}, el("span", { class: "k" }, "Decision"), el("p", {}, dec)),
+        el("div", {}, el("span", { class: "k" }, "Why"), el("p", {}, why)),
+        reopen ? el("div", {}, el("span", { class: "k" }, "Reopen if"), el("p", {}, reopen)) : null));
+    d.dataset.theme = th;
+    d.dataset.text = `${id} ${title} ${th} ${dec} ${why} ${reopen}`.toLowerCase();
+    dlist.append(d);
+    return d;
+  });
+  function filter() {
+    const q = dq.value.trim().toLowerCase();
+    let n = 0;
+    for (const d of items) { const show = (theme === "All" || d.dataset.theme === theme) && (!q || d.dataset.text.includes(q)); d.hidden = !show; n += show; }
+    $("#dcount").textContent = `${n} of ${items.length}`;
+  }
+  dq.addEventListener("input", filter);
+  filter();
+  function openDecision(id) {
+    theme = "All"; dq.value = "";
+    [...tbar.children].forEach((b) => b.setAttribute("aria-pressed", String(b.textContent === "All")));
+    filter();
+    const d = $(`#${id.toLowerCase()}`);
+    d.open = true;
+    d.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    d.classList.remove("flash"); void d.offsetWidth; d.classList.add("flash");
+  }
+  if (/^#d\d+$/.test(location.hash)) openDecision(location.hash.slice(1).toUpperCase());
+
+  /* ================= Build ================= */
+  const VOY = [
+    ["done", "Foundations", "The loop on text, the gate, change cards with three-way merge, checkpoints and handoff, the Codex adapter, one rulebook, the brief and footprint."],
+    ["done", "1 · Doors over the harbour", "Each place opens its tool, file, folder, Excel workbook or dashboard without leaving the harbour."],
+    ["done", "2 · Cards on ships", "Live cards: approve a command, check a brief or review changes right on the ship."],
+    ["done", "3 · Pipeline runs as ships", "The pipeline console's own run records become blue ships with their stages, read-only."],
+    ["done", "4 · Below deck", "Each place as a room of its real files, each with a role, and any task's footprint highlighted."],
+    ["part", "5 · The Excel route", "Changes made by Excel on a copy, workbook change cards, backup and replace, and \"use my Excel selection\". Chart pictures and VBA next."],
+    ["next", "6 · Charts: gallery and trails", "Find where a chart's numbers come from, and route changes to the recipe that makes it."],
+    ["next", "7 · Dashboards", "A launch point first; measures as reviewable text if reports are saved as projects."],
+  ];
+  const ST = { done: "Built", part: "In progress", next: "Planned" };
+  const voy = $("#voyage");
+  VOY.forEach(([s, t, p]) => voy.append(el("li", { class: s }, el("span", { class: "dot", "aria-hidden": "true" }, s === "done" ? "✓" : ""), el("div", {}, el("b", {}, t), el("span", { class: "st" }, ST[s])), el("p", {}, p))));
+
+  /* nav highlight */
+  const links = [...document.querySelectorAll(".top nav a")];
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting) links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#${e.target.id}`));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  links.forEach((a) => { const s = $(a.getAttribute("href")); if (s) io.observe(s); });
+})();
+</script>
+
+</body>
+</html>
